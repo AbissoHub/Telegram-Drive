@@ -1,15 +1,25 @@
 from telethon import TelegramClient
+from telethon.tl.types import InputMessagesFilterDocument
 from utils.config import config
 from utils.response_handler import success, error
 import os
+import functools
+
+
+def ensure_connected(func):
+    @functools.wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        if not self.is_connected():
+            return error("Client is not connected")
+        return await func(self, *args, **kwargs)
+    return wrapper
 
 
 class TelegramAPI:
     def __init__(self):
-
-        self.API_ID = config('API_ID')
-        self.API_HASH = config('API_HASH')
-        self.PHONE = config('PHONE')
+        self.API_ID = config.API_ID
+        self.API_HASH = config.API_HASH
+        self.PHONE = config.PHONE
         self.Name = "Telegram Drive"
         self.client = TelegramClient(self.Name, self.API_ID, self.API_HASH)
 
@@ -22,13 +32,13 @@ class TelegramAPI:
     def __get_PHONE(self):
         return self.PHONE
 
-    def __is_connected(self):
+    def is_connected(self):
         return self.client.is_connected()
 
-    async def connect(self, phone):
+    async def connect(self):
         try:
-            await self.client.start(phone)
-            if not self.__is_connected():
+            await self.client.start(self.__get_PHONE())
+            if not self.is_connected():
                 raise ConnectionError("Failed to connect to Telegram")
             return success("Client connected successfully")
         except Exception as e:
@@ -36,13 +46,109 @@ class TelegramAPI:
 
     async def disconnect(self):
         try:
-            await self.client.disconnect()
+            if self.is_connected():
+                await self.client.disconnect()
             return success("Client disconnected successfully")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def get_chats(self):
+        try:
+            chats = []
+            async for dialog in self.client.iter_dialogs():
+                chats.append(dialog.name)
+            return success(chats)
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def get_chat_id_by_name(self, chat_name):
+        try:
+            async for dialog in self.client.iter_dialogs():
+                if dialog.name == chat_name:
+                    return success(dialog.id)
+            return error("Chat not found")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def get_messages(self, chat_id):
+        try:
+            messages = []
+            async for message in self.client.iter_messages(chat_id):
+                messages.append(message.to_dict())
+                print(message)
+            return success(messages)
         except Exception as e:
             return error(str(e))
 
 
 
+
+
+
+
+
+    @ensure_connected
+    async def upload_file(self, chat_id, file_path):
+        try:
+            await self.client.send_file(chat_id, file_path)
+            return success("File uploaded successfully")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def download_file(self, chat_id, message_id, download_path):
+        try:
+            message = await self.client.get_messages(chat_id, ids=message_id)
+            if message and message.file:
+                await self.client.download_media(message, download_path)
+                return success("File downloaded successfully")
+            else:
+                raise FileNotFoundError("File not found in the specified message")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def rename_file(self, chat_id, message_id, new_name):
+        try:
+            message = await self.client.get_messages(chat_id, ids=message_id)
+            if message and message.file:
+                old_path = await self.client.download_media(message, 'temp/')
+                new_path = os.path.join(os.path.dirname(old_path), new_name)
+                os.rename(old_path, new_path)
+                await self.client.send_file(chat_id, new_path, caption="Renamed file")
+                os.remove(new_path)
+                return success("File renamed successfully")
+            else:
+                raise FileNotFoundError("File not found in the specified message")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def delete_file(self, chat_id, message_id):
+        try:
+            await self.client.delete_messages(chat_id, message_id)
+            return success("File deleted successfully")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def send_message(self, chat_id, message):
+        try:
+            await self.client.send_message(chat_id, message)
+            return success("Message sent successfully")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def edit_message(self, chat_id, message_id, new_message):
+        try:
+            await self.client.edit_message(chat_id, message_id, new_message)
+            return success("Message edited successfully")
+        except Exception as e:
+            return error(str(e))
 
     async def upload(self, file_path, target_group):
         try:
