@@ -157,8 +157,7 @@ class TelegramAPI:
             return error(str(e))
 
 
-
-
+    # DA CONTROLLARE E SISTEMARE QUESTI
     @ensure_connected
     async def upload_file(self, chat_id, file_path):
         try:
