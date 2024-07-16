@@ -89,7 +89,7 @@ class TelegramAPI:
             messages = []
             async for message in self.client.iter_messages(chat_id):
                 messages.append(message)
-                #print(message)
+                # print(message)
             # print(messages)
             return success("All messages fetched", messages)
         except Exception as e:
@@ -108,7 +108,10 @@ class TelegramAPI:
                 if isinstance(message, Message) and message.file is not None:
                     # Format Media type
                     result.append(Media(message.id, message.message, message.media))
-            # print(result[0].__str__())
+
+            #for m in result:
+                #print(m)
+
             return success("All file fetched", result)
 
         except Exception as e:
@@ -122,14 +125,15 @@ class TelegramAPI:
             if t["status"] == "error":
                 return error(t['message'])
 
+            #print(t)
             for media in t['data']:
+                #print(media)
                 if media.get_id() == str(message_id):
                     return success("File Exist", media)
 
             return error("File doesn't exist")
         except Exception as e:
             return error(str(e))
-
 
     # Download file by message_id and chat_id
     @ensure_connected
@@ -139,7 +143,8 @@ class TelegramAPI:
             if m["status"] == "error":
                 return error(m['message'])
             print(m["data"].get_mediaTelegram())
-            await self.client.download_media(m["data"].get_mediaTelegram(), download_path, progress_callback=callback_download_progress)
+            await self.client.download_media(m["data"].get_mediaTelegram(), download_path,
+                                             progress_callback=callback_download_progress)
             return success("File downloaded successfully", None)
 
         except Exception as e:
@@ -156,29 +161,23 @@ class TelegramAPI:
         except Exception as e:
             return error(str(e))
 
-
-    # DA CONTROLLARE E SISTEMARE QUESTI
+    # Upload file by chatId, file_path and message
     @ensure_connected
-    async def upload_file(self, chat_id, file_path):
+    async def upload_file(self, chat_id, file_path, message):
         try:
-            await self.client.send_file(chat_id, file_path)
-            return success("File uploaded successfully")
+            await self.client.send_file(chat_id, file_path, caption=message, force_document=True)
+            return success("File uploaded successfully", None)
         except Exception as e:
             return error(str(e))
 
+
+    # DA SISTEMARE
     @ensure_connected
     async def rename_file(self, chat_id, message_id, new_name):
         try:
-            message = await self.client.get_messages(chat_id, ids=message_id)
-            if message and message.file:
-                old_path = await self.client.download_media(message, 'temp/')
-                new_path = os.path.join(os.path.dirname(old_path), new_name)
-                os.rename(old_path, new_path)
-                await self.client.send_file(chat_id, new_path, caption="Renamed file")
-                os.remove(new_path)
-                return success("File renamed successfully")
-            else:
-                raise FileNotFoundError("File not found in the specified message")
+            f = await self.get_file_by_message_id(chat_id, message_id)
+            #print(f)
+
         except Exception as e:
             return error(str(e))
 
