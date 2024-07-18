@@ -7,13 +7,17 @@ def bytes_to_mb(bytes):
 
 
 class Media:
-    def __init__(self, id, text, mediaTelegram):
-        self.id = str(id)
-        self.text = str(text)
-        self.mediaTelegram = mediaTelegram
+    def __init__(self, message):
+
+        self.id = str(message.id)
+        self.message = message
 
     def __str__(self):
-        return f"Media(id={self.id}, message={self.text}), mediaTelegram={self.mediaTelegram}"
+        return f"Media(id={self.id}, message={self.get_message_text()}), mediaTelegram={self.get_mediaTelegram()}"
+
+    # Return message entity native of telethon
+    def get_message_entity(self):
+        return self.message
 
     # Return id message
     def get_id_message(self):
@@ -21,11 +25,11 @@ class Media:
 
     # Return text in the message
     def get_message_text(self):
-        return self.text
+        return self.message.text
 
     # Return media object telegram
     def get_mediaTelegram(self):
-        return self.mediaTelegram
+        return self.message.media
 
     # Return mime type of document
     def get_media_type(self):

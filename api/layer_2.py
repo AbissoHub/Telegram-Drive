@@ -107,10 +107,10 @@ class TelegramAPI:
             for message in t['data']:
                 if isinstance(message, Message) and message.file is not None:
                     # Format Media type
-                    result.append(Media(message.id, message.message, message.media))
+                    result.append(Media(message))
 
-            #for m in result:
-                #print(m)
+            # for m in result:
+            # print(m)
 
             return success("All file fetched", result)
 
@@ -124,11 +124,10 @@ class TelegramAPI:
             t = await self.get_all_file_by_chatId(chat_id)
             if t["status"] == "error":
                 return error(t['message'])
-
             #print(t)
             for media in t['data']:
-                #print(media)
-                if media.get_id() == str(message_id):
+                # print(media)
+                if str(media.get_id_message()) == str(message_id):
                     return success("File Exist", media)
 
             return error("File doesn't exist")
@@ -142,7 +141,7 @@ class TelegramAPI:
             m = await self.get_file_by_message_id(chat_id, message_id)
             if m["status"] == "error":
                 return error(m['message'])
-            print(m["data"].get_mediaTelegram())
+            #print(m["data"].get_mediaTelegram())
             await self.client.download_media(m["data"].get_mediaTelegram(), download_path,
                                              progress_callback=callback_download_progress)
             return success("File downloaded successfully", None)
@@ -170,93 +169,47 @@ class TelegramAPI:
         except Exception as e:
             return error(str(e))
 
-
-    # DA SISTEMARE
+    # Modify text attacked in media message by message instance
     @ensure_connected
-    async def rename_file(self, chat_id, message_id, new_name):
+    async def edit_message_by_message_instance(self, mess, new_message):
         try:
-            f = await self.get_file_by_message_id(chat_id, message_id)
-            #print(f)
+            t = await self.client.edit_message(mess, new_message)
+            if str(t.message) == str(new_message):
+                return success("Message edited successfully", None)
 
         except Exception as e:
             return error(str(e))
 
+    # Modify text attacked in media message by chat_id and message_id
     @ensure_connected
-    async def delete_file(self, chat_id, message_id):
+    async def edit_message_by_id(self, chat_id, message_id, new_message):
         try:
-            await self.client.delete_messages(chat_id, message_id)
-            return success("File deleted successfully")
+            t = await self.client.edit_message(chat_id,message_id ,new_message)
+            if str(t.message) == str(new_message):
+                return success("Message edited successfully", None)
+
         except Exception as e:
             return error(str(e))
 
+    # Delete file using message instance
     @ensure_connected
-    async def send_message(self, chat_id, message):
+    async def delete_file_by_message_instance(self, mess):
         try:
-            await self.client.send_message(chat_id, message)
-            return success("Message sent successfully")
+            await mess.delete()
+            return success("File deleted successfully", None)
         except Exception as e:
             return error(str(e))
 
+    # Delete file using chat_id and message_id
     @ensure_connected
-    async def edit_message(self, chat_id, message_id, new_message):
+    async def delete_file_by_id(self, chat_id, message_id):
         try:
-            await self.client.edit_message(chat_id, message_id, new_message)
-            return success("Message edited successfully")
+            m = await self.get_file_by_message_id(chat_id, message_id)
+            if m["status"] == "error":
+                return error(m['message'])
+            await m["data"].get_message_entity().delete()
+
+            return success("File deleted successfully", None)
         except Exception as e:
             return error(str(e))
 
-    async def upload(self, file_path, target_group):
-        try:
-            file = await self.client.upload_file(file_path)
-            await self.client.send_file(target_group, file)
-            return success(f'File {file_path} uploaded to group {target_group}')
-        except Exception as e:
-            return error(str(e))
-
-    async def download(self, target_group, target_file):
-        try:
-            async for message in self.client.iter_messages(target_group):
-                if target_file in message.file.name:
-                    path = await self.client.download_media(message, file=target_file)
-                    return success(f'File downloaded to {path}')
-            return error('File not found')
-        except Exception as e:
-            return error(str(e))
-
-    async def delete(self, target_group, target_file):
-        try:
-            async for message in self.client.iter_messages(target_group):
-                if target_file in message.file.name:
-                    await self.client.delete_messages(target_group, [message.id])
-                    return success(f'File {target_file} deleted from group {target_group}')
-            return error('File not found')
-        except Exception as e:
-            return error(str(e))
-
-    async def move(self, target_file, start_group, target_group):
-        try:
-            async for message in self.client.iter_messages(start_group):
-                if target_file in message.file.name:
-                    file_path = await self.client.download_media(message, file=target_file)
-                    upload_response = await self.upload(file_path, target_group)
-                    delete_response = await self.delete(start_group, target_file)
-                    os.remove(file_path)
-                    return success(f'File {target_file} moved from {start_group} to {target_group}')
-            return error('File not found')
-        except Exception as e:
-            return error(str(e))
-
-    async def rename(self, target_group, target_file, new_name):
-        try:
-            async for message in self.client.iter_messages(target_group):
-                if target_file in message.file.name:
-                    file_path = await self.client.download_media(message, file=target_file)
-                    new_path = os.path.join(os.path.dirname(file_path), new_name)
-                    os.rename(file_path, new_path)
-                    upload_response = await self.upload(new_path, target_group)
-                    delete_response = await self.delete(target_group, target_file)
-                    os.remove(new_path)
-                    return success(f'File {target_file} renamed to {new_name} in group {target_group}')
-            return error('File not found')
-        except Exception as e:
-            return error(str(e))
