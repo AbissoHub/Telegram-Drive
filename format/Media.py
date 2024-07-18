@@ -39,7 +39,7 @@ class Media:
     def get_media_size(self):
         return bytes_to_mb(self.get_mediaTelegram().document.size)
 
-    # Return media file name
+    # Return media file name -- THE ORIGINAL ONE
     def get_media_name(self):
         return self.get_mediaTelegram().document.attributes[
             len(self.get_mediaTelegram().document.attributes) - 1].file_name

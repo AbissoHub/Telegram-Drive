@@ -1,5 +1,5 @@
 import asyncio
-from apiLayer2 import TelegramAPI
+from layer_2 import TelegramAPI
 
 async def main():
     telegram_api = TelegramAPI()
