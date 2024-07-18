@@ -1,30 +1,43 @@
 import asyncio
-from layer_2 import TelegramAPI
+from layer_3_1 import Layer3_1
 
 async def main():
-    telegram_api = TelegramAPI()
+    endpoint = await Layer3_1.create()
 
-    # Connect to Telegram
-    response = await telegram_api.connect()
+    # Get all media messages
+    response = await endpoint.get_all_text_message()
     print(response)
 
-    # Get all chats
-    response = await telegram_api.get_chats()
+    # Get all file names
+    response = await endpoint.get_all_file_names()
     print(response)
 
-    response = await telegram_api.get_chat_id_by_name("123456789")
+    # Get all directories
+    response = await endpoint.get_all_directory()
     print(response)
 
-    response = await telegram_api.get_all_file_by_chatId(-4231055711)
+    # Get all media by directory
+    response = await endpoint.get_all_media_by_directory("./giacomo/home/uni")
     print(response)
 
+    # Get file from name
+    response = await endpoint.get_file_from_name("Luke.jpg")
+    print(response)
 
-    print(response["data"][0])
-    #response = await telegram_api.edit_message(response["data"][0].get_message_entity(), "ALO ALO ALO ALO")
+    # Upload file
+    response = await endpoint.upload_file("./test.jpg", "./", "all")
+    print(response)
+
+    # Rename file
+    response = await endpoint.rename_file("Luke.jpg", "test_renamed.jpg")
+    print(response)
+
+    # Download file
+    #response = await endpoint.download_file("test_renamed.png", "path/to/download_directory")
     #print(response)
 
-    response = await telegram_api.delete_file_by_id(-4231055711, 13399)
-    print(response)
+
+
 
 if __name__ == "__main__":
     asyncio.run(main())
