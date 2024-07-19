@@ -165,10 +165,10 @@ class Layer3_1:
 
     # Download file
     async def download_file(self, message_id, dest):
-        m = await self.get_file_by_id(message_id)
+        m = await self.client.get_native_message_instance(self.chat_id, message_id)
         if m["status"] == "error":
             return error(m["message"])
-        response = await self.client.download_file_by_Media(m["data"], str(dest) + str(m["data"].get_media_name()))
+        response = await self.client.download_file_by_Media(m["data"], str(dest) + Media(m["data"]).get_media_name())
         return response
 
     # Move file from folder to another - OK

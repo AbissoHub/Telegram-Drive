@@ -26,22 +26,13 @@ async def main():
     #print(response)
 
     # Get file from name
-    response = await endpoint.get_file_by_name("ano.jpg")
+    response = await endpoint.get_file_by_name("ano1.jpg")
     print(response)
 
-    # Rename file
-    #response = await endpoint.rename_file(response["data"].get_id_message(), "ano1.jpg")
-    #print(response)
 
-    # Move file
-    #response = await endpoint.move_to_trash(response["data"].get_id_message())
-    #print(response)
-
-    response = await endpoint.get_all_media_by_directory_incluse_subdir("./giacomo")
-    print(response)
     # Download file
-    # response = await endpoint.download_file(response["data"].get_id_message(), "./")
-    # print(response)
+    response = await endpoint.download_file(response["data"].get_id_message(), "./")
+    print(response)
 
 
 if __name__ == "__main__":
