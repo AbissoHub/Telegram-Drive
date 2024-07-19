@@ -10,7 +10,12 @@ from format.Media import Media
 
 # Printing download progress
 def callback_download_progress(current, total):
-    print('Downloaded', current, 'out of', total, 'bytes: {:.2%}'.format(current / total))
+    print('Download', current, 'out of', total, 'bytes: {:.2%}'.format(current / total))
+
+
+# Printing upload progress
+def callback_upload_progress(current, total):
+    print('Upload', current, 'out of', total, 'bytes: {:.2%}'.format(current / total))
 
 
 def ensure_connected(func):
@@ -77,7 +82,7 @@ class TelegramAPI:
         try:
             async for dialog in self.client.iter_dialogs():
                 if dialog.name == chat_name:
-                    return success("Chat ID found", dialog.id)
+                    return success("Chat ID found", dialog)
             return success("Chat not found", 0)
         except Exception as e:
             return error(str(e))
@@ -105,6 +110,21 @@ class TelegramAPI:
                 if isinstance(message, Message) and message.file is not None:
                     result.append(Media(message))
             return success("All files fetched", result)
+        except Exception as e:
+            return error(str(e))
+
+    async def get_native_message_instance(self, chat_id, message_id):
+        """Fetch native message instance from a chat by message_id."""
+        try:
+            t = await self.get_all_messages(chat_id)
+            if t["status"] == "error":
+                return error(t['message'])
+
+            for message in t['data']:
+                if isinstance(message, Message) and message.file is not None:
+                    if str(message.id) == str(message_id):
+                        return success("Message fetched", message)
+            return error("Message not found")
         except Exception as e:
             return error(str(e))
 
@@ -139,7 +159,8 @@ class TelegramAPI:
     async def download_file_by_Media(self, m, download_path):
         """Download file by Media object."""
         try:
-            await self.client.download_media(m, download_path, progress_callback=callback_download_progress)
+            s = await self.client.download_media(m, download_path, progress_callback=callback_download_progress)
+            print(s)
             return success("File downloaded successfully", None)
         except Exception as e:
             return error(str(e))
@@ -148,26 +169,18 @@ class TelegramAPI:
     async def upload_file(self, chat_id, file_path, message):
         """Upload a file to a chat."""
         try:
-            await self.client.send_file(chat_id, file_path, caption=message, force_document=True)
+            await self.client.send_file(chat_id, file_path, caption=message, force_document=True,
+                                        progress_callback=callback_upload_progress)
             return success("File uploaded successfully", None)
         except Exception as e:
             return error(str(e))
 
     @ensure_connected
     async def edit_message_by_message_instance(self, mess, new_message):
-        """Edit a message by message instance."""
-        try:
-            t = await self.client.edit_message(mess, new_message)
-            if str(t.message) == str(new_message):
-                return success("Message edited successfully", None)
-        except Exception as e:
-            return error(str(e))
-
-    @ensure_connected
-    async def edit_message_by_id(self, chat_id, message_id, new_message):
         """Edit a message by chat ID and message ID."""
         try:
-            t = await self.client.edit_message(chat_id, message_id, new_message)
+            t = await self.client.edit_message(mess, new_message)
+            #print(t)
             if str(t.message) == str(new_message):
                 return success("Message edited successfully", None)
         except Exception as e:
@@ -182,14 +195,6 @@ class TelegramAPI:
         except Exception as e:
             return error(str(e))
 
-    @ensure_connected
-    async def delete_file_by_id(self, chat_id, message_id):
-        """Delete a file by chat ID and message ID."""
-        try:
-            m = await self.get_file_by_message_id(chat_id, message_id)
-            if m["status"] == "error":
-                return error(m['message'])
-            await m["data"].get_message_entity().delete()
-            return success("File deleted successfully", None)
-        except Exception as e:
-            return error(str(e))
+
+
+

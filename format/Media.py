@@ -40,9 +40,12 @@ class Media:
         return bytes_to_mb(self.get_mediaTelegram().document.size)
 
     # Return media file name -- THE ORIGINAL ONE
-    def get_media_name(self):
+    def get_media_name_ORIGINAL(self):
         return self.get_mediaTelegram().document.attributes[
             len(self.get_mediaTelegram().document.attributes) - 1].file_name
+
+    def get_media_name(self):
+        return str(self.get_message_text()).split("@")[0]
 
     # Return media 'date' object
     def get_date(self):

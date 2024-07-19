@@ -1,10 +1,21 @@
+# Create correct format string to change name of file
+
+import os
+
 def rename_file(original_string, new_first_substring):
-    substrings = original_string.split('@')
-    substrings[0] = new_first_substring
-    return '@'.join(substrings)
+    p = original_string.split('@')
+    p[0] = new_first_substring
+    return '@'.join(p)
 
 
+# Create correct format string to change path of file
 def move_file(original_string, new_second_substring):
-    substrings = original_string.split('@')
-    substrings[1] = new_second_substring
-    return '@'.join(substrings)
+    p = original_string.split('@')
+    p[1] = new_second_substring
+    return '@'.join(p)
+
+
+def is_file_in_directory(target_directory, file_path):
+    target_directory = os.path.abspath(target_directory)
+    file_path = os.path.abspath(file_path)
+    return file_path.startswith(target_directory)

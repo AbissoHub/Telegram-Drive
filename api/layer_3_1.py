@@ -1,6 +1,7 @@
 # This is the easyest layer implemented
 import os
 
+from format.Media import Media
 # Only one user exist, logic without support database
 # User can:
 
@@ -11,7 +12,7 @@ import os
 
 from layer_2 import TelegramAPI
 from utils.response_handler import success, error
-from utils.utils_functions import rename_file, move_file
+from utils.utils_functions import rename_file, move_file, is_file_in_directory
 
 ALL = "all"
 VISIBLE = "visible"
@@ -28,7 +29,7 @@ class Layer3_1:
 
     async def __init_telegram_storage(self):
         try:
-            #Connect telegram
+            # Connect telegram
             s = await self.client.connect()
             print(s)
             r = await self.client.get_chat_id_by_name(self.cluster_name)
@@ -111,7 +112,18 @@ class Layer3_1:
             return error(e)
         return success("Get successfully", result)
 
-    async def get_file_from_name(self, media_name):
+    # Return media objects present in specific directory
+    async def get_all_media_by_directory_incluse_subdir(self, directory):
+        result = []
+        try:
+            for media in await self.__get_all_file(ALL):
+                if is_file_in_directory(directory, str(media.get_message_text()).split("@")[1]):
+                    result.append(media)
+        except Exception as e:
+            return error(e)
+        return success("Get successfully", result)
+
+    async def get_file_by_name(self, media_name):
         try:
             for media in await self.__get_all_file(ALL):
                 if str(media.get_message_text()).split("@")[0] == media_name:
@@ -120,9 +132,18 @@ class Layer3_1:
             return error(e)
         return error("File not found")
 
+    async def get_file_by_id(self, message_id):
+        try:
+            for media in await self.__get_all_file(ALL):
+                if str(media.get_id_message()) == str(message_id):
+                    return success("Get successfully", media)
+        except Exception as e:
+            return error(e)
+        return error("File not found")
+
     # POST ACTION
 
-    # Upload file to drive
+    # Upload file to drive - OK
     async def upload_file(self, src_file, scr_destination, visible):
         m = None
         try:
@@ -132,41 +153,41 @@ class Layer3_1:
         response = await self.client.upload_file(self.chat_id, src_file, m)
         return response
 
-    # Rename file
-    async def rename_file(self, old_name, new_name):
+    # Rename file - OK
+    async def rename_file(self, message_id, new_name):
 
-        m = self.get_file_from_name(old_name)
+        m = await self.client.get_native_message_instance(self.chat_id, message_id)
         if m["status"] == "error":
             return error(m["message"])
         response = await self.client.edit_message_by_message_instance(m["data"], rename_file(
-            str(m["data"].get_message_text()).split("@")[0], new_name))
+            str(Media(m["data"]).get_message_text()), new_name))
         return response
 
     # Download file
-    async def download_file(self, file_name, dest):
-        m = self.get_file_from_name(file_name)
+    async def download_file(self, message_id, dest):
+        m = await self.get_file_by_id(message_id)
         if m["status"] == "error":
             return error(m["message"])
-        response = await self.client.download_file_by_Media(m["data"], str(dest) + "/" + str(file_name))
+        response = await self.client.download_file_by_Media(m["data"], str(dest) + str(m["data"].get_media_name()))
         return response
 
-    # Move file from folder to another
-    async def move_file(self, file_name, new_dest):
-        m = self.get_file_from_name(file_name)
+    # Move file from folder to another - OK
+    async def move_file(self, message_id, new_dest):
+        m = await self.client.get_native_message_instance(self.chat_id, message_id)
         if m["status"] == "error":
             return error(m["message"])
         response = await self.client.edit_message_by_message_instance(m["data"], move_file(
-            str(m["data"].get_message_text()).split("@")[1], new_dest))
+            str(Media(m["data"]).get_message_text()), new_dest))
         return response
 
-    # Move to trash -- fake remove
-    async def move_to_trash(self, file_name):
-        return await self.move_file(file_name, self.trash_directory)
+    # Move to trash -- fake remove - OK
+    async def move_to_trash(self, message_id):
+        return await self.move_file(message_id, self.trash_directory)
 
-    # Remove definitive object from database
-    async def delete_file(self, file_name):
-        m = self.get_file_from_name(file_name)
+    # Remove definitive object from database - OK
+    async def delete_file(self, message_id):
+        m = await self.client.get_native_message_instance(self.chat_id, message_id)
         if m["status"] == "error":
             return error(m["message"])
-        response = await self.delete_file(file_name)
+        response = await self.client.delete_file_by_message_instance(m["data"])
         return response
