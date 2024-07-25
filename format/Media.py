@@ -47,6 +47,9 @@ class Media:
     def get_media_name(self):
         return str(self.get_message_text()).split("@")[0]
 
+    def get_locate_media(self):
+        return str(self.get_message_text()).split("@")[1]
+
     # Return media 'date' object
     def get_date(self):
         return self.get_mediaTelegram().document.date

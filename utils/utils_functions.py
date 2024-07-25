@@ -2,6 +2,7 @@
 
 import os
 
+
 def rename_file(original_string, new_first_substring):
     p = original_string.split('@')
     p[0] = new_first_substring

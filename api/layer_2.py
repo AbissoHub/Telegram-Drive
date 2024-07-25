@@ -33,6 +33,7 @@ class TelegramAPI:
         self.API_ID = config.API_ID
         self.API_HASH = config.API_HASH
         self.PHONE = config.PHONE
+        self.USERS = config.USERS
         self.Name = "Telegram Drive"
         self.client = TelegramClient(self.Name, self.API_ID, self.API_HASH)
 
@@ -44,6 +45,9 @@ class TelegramAPI:
 
     def __get_PHONE(self):
         return self.PHONE
+
+    def get_users(self):
+        return self.USERS
 
     def is_connected(self):
         return self.client.is_connected()
@@ -77,7 +81,7 @@ class TelegramAPI:
             return error(str(e))
 
     @ensure_connected
-    async def get_chat_id_by_name(self, chat_name):
+    async def get_dialog_object_by_name(self, chat_name):
         """Fetch chat ID by chat name."""
         try:
             async for dialog in self.client.iter_dialogs():

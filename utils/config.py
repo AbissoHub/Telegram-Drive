@@ -8,6 +8,8 @@ class Config:
             self.API_ID = config['API_ID']
             self.API_HASH = config['API_HASH']
             self.PHONE = config['PHONE']
+            self.USERS = config["USERS"]
+            self.MONGO_URL = config["MONGO_URL"]
 
 
 config = Config()
