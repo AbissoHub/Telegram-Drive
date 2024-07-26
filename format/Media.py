@@ -1,4 +1,4 @@
-from telethon.types import Message, MessageMediaDocument, MessageMediaPhoto
+from telethon.types import MessageMediaDocument
 
 
 def bytes_to_mb(bytes):
@@ -11,9 +11,6 @@ class Media:
 
         self.id = str(message.id)
         self.message = message
-
-    def __str__(self):
-        return f"Media(id={self.id}, message={self.get_message_text()}), mediaTelegram={self.get_mediaTelegram()}"
 
     # Return message entity native of telethon
     def get_message_entity(self):

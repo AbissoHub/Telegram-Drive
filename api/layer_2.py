@@ -59,7 +59,7 @@ class TelegramAPI:
                 raise ConnectionError("Failed to connect to Telegram")
             return success("Client connected successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2]" + str(e))
 
     async def disconnect(self):
         try:
@@ -67,7 +67,7 @@ class TelegramAPI:
                 await self.client.disconnect()
             return success("Client disconnected successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2]" + str(e))
 
     @ensure_connected
     async def get_chats(self):
@@ -78,16 +78,27 @@ class TelegramAPI:
                 chats.append(dialog.name)
             return success("All chats fetched", chats)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2]" + str(e))
 
     @ensure_connected
     async def get_dialog_object_by_name(self, chat_name):
-        """Fetch chat ID by chat name."""
+        """Fetch dialog object (telethon object) by chat name."""
         try:
             async for dialog in self.client.iter_dialogs():
-                if dialog.name == chat_name:
-                    return success("Chat ID found", dialog)
-            return success("Chat not found", 0)
+                if str(dialog.name) == str(chat_name):
+                    return success("Dialog object found", dialog)
+            return error("[LAYER-2] Dialog object not found")
+        except Exception as e:
+            return error(str(e))
+
+    @ensure_connected
+    async def get_dialog_object_by_id(self, chat_id):
+        """Fetch dialog object (telethon object) by chat name."""
+        try:
+            async for dialog in self.client.iter_dialogs():
+                if int(dialog.draft.entity.id) == int(chat_id):
+                    return success("Dialog object found", dialog)
+            return error("[LAYER-2] Dialog object not found")
         except Exception as e:
             return error(str(e))
 
@@ -100,7 +111,7 @@ class TelegramAPI:
                 messages.append(message)
             return success("All messages fetched", messages)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     async def get_all_file_by_chatId(self, chat_id):
         """Fetch all file messages from a chat."""
@@ -108,43 +119,43 @@ class TelegramAPI:
         try:
             t = await self.get_all_messages(chat_id)
             if t["status"] == "error":
-                return error(t['message'])
+                return error("[LAYER-2] " + t['message'])
 
             for message in t['data']:
                 if isinstance(message, Message) and message.file is not None:
                     result.append(Media(message))
             return success("All files fetched", result)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     async def get_native_message_instance(self, chat_id, message_id):
         """Fetch native message instance from a chat by message_id."""
         try:
             t = await self.get_all_messages(chat_id)
             if t["status"] == "error":
-                return error(t['message'])
+                return error("[LAYER-2] " + t['message'])
 
             for message in t['data']:
                 if isinstance(message, Message) and message.file is not None:
                     if str(message.id) == str(message_id):
                         return success("Message fetched", message)
-            return error("Message not found")
+            return error("[LAYER-2] Message not found")
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     async def get_file_by_message_id(self, chat_id, message_id):
         """Fetch a specific file by message ID."""
         try:
             t = await self.get_all_file_by_chatId(chat_id)
             if t["status"] == "error":
-                return error(t['message'])
+                return error("[LAYER-2] " + t['message'])
 
             for media in t['data']:
                 if str(media.get_id_message()) == str(message_id):
                     return success("File exists", media)
-            return error("File doesn't exist")
+            return error("[LAYER-2] File doesn't exist")
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     @ensure_connected
     async def download_file_by_message_id(self, chat_id, message_id, download_path):
@@ -152,12 +163,12 @@ class TelegramAPI:
         try:
             m = await self.get_file_by_message_id(chat_id, message_id)
             if m["status"] == "error":
-                return error(m['message'])
+                return error("[LAYER-2] " + m['message'])
             await self.client.download_media(m["data"].get_mediaTelegram(), download_path,
                                              progress_callback=callback_download_progress)
             return success("File downloaded successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     @ensure_connected
     async def download_file_by_Media(self, m, download_path):
@@ -167,7 +178,7 @@ class TelegramAPI:
             print(s)
             return success("File downloaded successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     @ensure_connected
     async def upload_file(self, chat_id, file_path, message):
@@ -177,7 +188,7 @@ class TelegramAPI:
                                         progress_callback=callback_upload_progress)
             return success("File uploaded successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     @ensure_connected
     async def edit_message_by_message_instance(self, mess, new_message):
@@ -188,7 +199,7 @@ class TelegramAPI:
             if str(t.message) == str(new_message):
                 return success("Message edited successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
     @ensure_connected
     async def delete_file_by_message_instance(self, mess):
@@ -197,7 +208,7 @@ class TelegramAPI:
             await mess.delete()
             return success("File deleted successfully", None)
         except Exception as e:
-            return error(str(e))
+            return error("[LAYER-2] " + str(e))
 
 
 
