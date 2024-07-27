@@ -1,5 +1,4 @@
-# Module to interact with mongodb api:
-# - login / create valide session multi user telegram
+# Module to interact with mongodb api to manage storage of telegram's files:
 import asyncio
 import uuid
 from pymongo.errors import ConnectionFailure
@@ -8,17 +7,12 @@ from pymongo.server_api import ServerApi
 from datetime import datetime
 from utils.response_handler import success, error
 
-ALL = "all"
-VISIBLE = "visible"
-NOT_VISIBLE = "not_visible"
-
 
 class TelegramDriveMongo:
     def __init__(self):
         self.url_mongo = None
         self.client = None
         self.db = None
-        self.users_collection = None
         self.clusters_collection = None
         self.base_directory = "./"
         self.trash_directory = self.base_directory + "trash"
@@ -34,15 +28,15 @@ class TelegramDriveMongo:
         self.clusters_collection.drop()
 
         # INIT CLUSTER DATA
-        self.users_collection.create_index("cluster_name")
-        self.users_collection.create_index("cluster_id", unique=True)
-        self.users_collection.create_index("files.is_folder")
-        self.users_collection.create_index("files.id_message")
-        self.users_collection.create_index("files.media_name")
-        self.users_collection.create_index("files.locate_media")
-        self.users_collection.create_index("files.media_size")
-        self.users_collection.create_index("files.media_type")
-        self.users_collection.create_index("files.date")
+        self.clusters_collection.create_index("cluster_name")
+        self.clusters_collection.create_index("cluster_id", unique=True)
+        self.clusters_collection.create_index("files.is_folder")
+        self.clusters_collection.create_index("files.id_message")
+        self.clusters_collection.create_index("files.media_name")
+        self.clusters_collection.create_index("files.locate_media")
+        self.clusters_collection.create_index("files.media_size")
+        self.clusters_collection.create_index("files.media_type")
+        self.clusters_collection.create_index("files.date")
 
         print("[INFO] Initialization 'cluster-data' completed")
 
@@ -124,21 +118,6 @@ class TelegramDriveMongo:
             return None
         await instance.sync_data(layer)
         return instance
-
-    # Return user object using discord id
-    def __get_user_by_discord_id(self, discord_id):
-        result = self.users_collection.find_one({"discord_id": discord_id})
-        return result
-
-    # Get user by username
-    def __get_user_by_username(self, username):
-        result = self.users_collection.find_one({"username": username})
-        return result
-
-    # Get all discord_ids
-    def __get_all_discord_ids(self):
-        discord_ids = self.users_collection.distinct("discord_id")
-        return discord_ids
 
     # Get file by name and id
     def __get_file_by_id(self, file_id):

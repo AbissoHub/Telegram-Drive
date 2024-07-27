@@ -4,7 +4,6 @@ from format.Media import Media
 from layer_3_2 import Layer3_2
 from mongodb import TelegramDriveMongo
 from utils.response_handler import success, error
-from utils.utils_functions import rename_file, move_file, is_file_in_directory
 from utils.config import config
 
 
@@ -106,4 +105,5 @@ async def main():
     print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
