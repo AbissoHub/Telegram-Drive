@@ -90,8 +90,8 @@ class Layer3_2:
     # POST ACTION
 
     # Upload file to drive -
-    async def upload_file(self, src_file, scr_destination, cluster_name):
-        n = await self.client.get_dialog_object_by_name(cluster_name)
+    async def upload_file(self, src_file, scr_destination, cluster_id):
+        n = await self.client.get_dialog_object_by_id(cluster_id)
         if n["status"] == "error":
             return error(n["message"])
 
@@ -113,7 +113,6 @@ class Layer3_2:
         m = await self.client.get_native_message_instance(n["data"], message_id)
         if m["status"] == "error":
             return error(m["message"])
-
         response = await self.client.download_file_by_Media(m["data"], str(dest) + media_name)
         return response
 

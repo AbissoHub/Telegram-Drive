@@ -181,10 +181,10 @@ class TelegramAPI:
             return error("[LAYER-2] " + str(e))
 
     @ensure_connected
-    async def upload_file(self, chat_id, file_path, message):
+    async def upload_file(self, m, file_path, message):
         """Upload a file to a chat."""
         try:
-            await self.client.send_file(chat_id, file_path, caption=message, force_document=True,
+            await self.client.send_file(m, file_path, caption=message, force_document=True,
                                         progress_callback=callback_upload_progress)
             return success("File uploaded successfully", None)
         except Exception as e:

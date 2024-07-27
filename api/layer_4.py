@@ -22,7 +22,7 @@ class Layer4:
     # Update method telegram - mongodb
     # Sync data from telegram drive to mongodb -- OK
     async def sync_drive(self):
-        return self.mongo.sync_data(self.client)
+        return await self.mongo.sync_data(self.client)
 
     # Get all cluster info -- OK
     async def get_clusters_info(self):
@@ -51,7 +51,7 @@ class Layer4:
     async def move_to_trash(self, cluster_id, file_id):
         return await self.mongo.trash_file(cluster_id, file_id)
 
-    # Delete file
+    # Delete file -- OK but the function doesn't return correctly ( + loop )
     async def delete_file(self, cluster_id, file_id):
         try:
             r1 = await self.mongo.delete_file(cluster_id, file_id)
@@ -66,7 +66,7 @@ class Layer4:
         except Exception as e:
             return error(e)
 
-    # Upload file
+    # Upload file -- OK but the function doesn't return correctly ( + loop )
     async def upload_file(self, src_file, scr_destination, cluster_id):
         # Upload
         try:
@@ -79,11 +79,10 @@ class Layer4:
         except Exception as e:
             return error(e)
 
-    # Download file
-    async def download_file(self, file_id, dest, cluster_id):
+    # Download file -- OK
+    async def download_file(self, cluster_id, file_id, dest, name_file):
         try:
-
-            r1 = await self.client.download_file(file_id, dest, cluster_id, "prova.jpg")
+            r1 = await self.client.download_file(file_id, dest, cluster_id, name_file)
             return r1
         except Exception as e:
             return error(e)
@@ -96,13 +95,15 @@ async def main():
 
     print(await l.get_all_file(4231055711))
     print(await l.get_clusters_info())
-    print(await l.get_file_info(4231055711, 13413))
+    print(await l.get_file_info(4231055711, 13528))
 
     #print(await l.rename_file(4231055711, 13413, "pio.jpg"))
     #print(await l.move_file(4231055711, 13413, "./ciao"))
     #print(await l.move_to_trash(4231055711, 13413))
 
-    print(await l.delete_file(4231055711, 13413))
+    #print(await l.delete_file(4231055711, 13413))
+    #print(await l.upload_file("sample.pdf", "./test/upload", 4231055711))
+    print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
 
 if __name__ == "__main__":
     asyncio.run(main())

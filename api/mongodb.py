@@ -190,13 +190,13 @@ class TelegramDriveMongo:
     async def delete_file(self, cluster_id, file_id):
         try:
             result = self.clusters_collection.update_one(
-                {"cluster_id": cluster_id},
-                {"$pull": {"files": {"id_message": file_id}}}
+                {"cluster_id": int(cluster_id)},
+                {"$pull": {"files": {"id_message": str(file_id)}}}
             )
             if result.modified_count > 0:
-                success("File deleted successfully", None)
+                return success("File deleted successfully", None)
             else:
-                error("File not found")
+                return error("File not found")
         except Exception as e:
             error(f"An error occurred while deleting the file: {e}")
 
