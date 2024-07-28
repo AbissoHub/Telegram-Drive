@@ -8,7 +8,7 @@ from datetime import datetime
 from utils.response_handler import success, error
 
 
-class TelegramDriveMongo:
+class DriveMongo:
     def __init__(self):
         self.url_mongo = None
         self.client = None

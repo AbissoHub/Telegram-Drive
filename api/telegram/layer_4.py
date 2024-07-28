@@ -2,7 +2,7 @@ import asyncio
 import os
 from format.Media import Media
 from layer_3_2 import Layer3_2
-from mongodb import TelegramDriveMongo
+from api.mongodb.mongodb_drive import DriveMongo
 from utils.response_handler import success, error
 from utils.config import config
 
@@ -14,7 +14,7 @@ class Layer4:
 
     async def initialize(self):
         self.client = await Layer3_2.create()
-        self.mongo = await TelegramDriveMongo().create(config.MONGO_URL, self.client, False)
+        self.mongo = await DriveMongo().create(config.MONGO_URL, self.client, False)
 
     # ------------------------------------------------------------------------------------------
 
