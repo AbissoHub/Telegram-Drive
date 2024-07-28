@@ -102,7 +102,7 @@ async def main():
 
     #print(await l.delete_file(4231055711, 13413))
     #print(await l.upload_file("sample.pdf", "./test/upload", 4231055711))
-    print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
+    #print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
