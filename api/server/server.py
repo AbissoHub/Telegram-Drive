@@ -16,7 +16,7 @@ async def initialize():
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.headers.get('auth')
         if not token:
             return jsonify({'status': 'error', 'message': 'Token not provided'}), 400
         if not auth.verify_token(token):
