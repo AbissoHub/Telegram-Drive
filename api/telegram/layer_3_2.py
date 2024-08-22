@@ -41,7 +41,7 @@ class Layer3_2:
                 # Init name of cluster private
                 for n in self.client.get_users():
                     name = "Drive_Layer_Private_" + str(n)
-                    #GET ID
+                    # GET ID
                     r = await self.client.get_dialog_object_by_name(name)
                     if r["status"] == "error":
                         raise Exception(r['message'])
@@ -56,6 +56,18 @@ class Layer3_2:
         instance = cls()
         await instance.__init_telegram_storage()
         return instance
+
+    # Verify if client is connected
+    def is_connected(self):
+        return self.client.is_connected()
+
+    # Connect client to telegram api
+    async def connect(self):
+        return await self.client.connect()
+
+    # Close connection -- end
+    async def disconnect(self):
+        return await self.client.disconnect()
 
     # Get json clusters info (private and shared)
     def get_clusters_info(self):

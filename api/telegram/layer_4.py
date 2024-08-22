@@ -18,6 +18,18 @@ class Layer4:
 
     # ------------------------------------------------------------------------------------------
 
+    # Verify if client is connected -- OK
+    def is_connect(self):
+        return self.client.is_connected()
+
+    # Connect client to telegram api -- OK
+    async def connect(self):
+        return await self.client.connect()
+
+    # Close connection -- end
+    async def disconnect(self):
+        return await self.client.disconnect()
+
     # Update method telegram - mongodb
     # Sync data from telegram drive to mongodb -- OK
     async def sync_drive(self):
@@ -95,14 +107,16 @@ async def main():
     print(await l.get_all_file(4231055711))
     print(await l.get_clusters_info())
     print(await l.get_file_info(4231055711, 13528))
+    print(await l.sync_drive())
 
-    #print(await l.rename_file(4231055711, 13413, "pio.jpg"))
-    #print(await l.move_file(4231055711, 13413, "./ciao"))
-    #print(await l.move_to_trash(4231055711, 13413))
+    # print(await l.rename_file(4231055711, 13413, "pio.jpg"))
+    # print(await l.move_file(4231055711, 13413, "./ciao"))
+    # print(await l.move_to_trash(4231055711, 13413))
 
-    #print(await l.delete_file(4231055711, 13413))
-    #print(await l.upload_file("sample.pdf", "./test/upload", 4231055711))
-    #print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
+    # print(await l.delete_file(4231055711, 13413))
+    # print(await l.upload_file("sample.pdf", "./test/upload", 4231055711))
+    # print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
