@@ -10,9 +10,13 @@ from utils.config import config
 class MongoDBLogin:
     def __init__(self, secret_key: str):
         self.client = MongoClient(config.MONGO_URL)
-        self.db = self.client["user-data"]
+        self.db = self.client["Teledrive"]
         self.users_collection = self.db["user-data"]
         self.secret_key = secret_key
+
+    def get_user_by_token(self, token):
+        user = self.db.users.find_one({'token': token})
+        return user
 
     def hash_password(self, password: str) -> str:
         """Hash the password using SHA-256."""
@@ -95,28 +99,8 @@ if __name__ == "__main__":
 
     auth = MongoDBLogin(secret_key)
 
-    email = "user@example.com"
-    password = "securepassword"
-
-    # Register a new user (Optional step)
-    # token = auth.create_user(email, password)
-    # if token:
-    #     print("User registered and logged in successfully! Token:", token)
-
-    token = auth.login(email, password)
+    token = auth.create_user("prova1234@gmail.com", "ciao1234", "455043995509456907")
     if token:
-        print("Login successful! Token:", token)
-        if auth.verify_token(token):
-            print("Token verified!")
-            print("User role:", auth.get_user_role(token))
-        else:
-            print("Invalid token!")
-
-        if auth.logout(token):
-            print("Logout successful!")
-        else:
-            print("Error during logout!")
-    else:
-        print("Invalid email or password!")
+        print("User registered and logged in successfully! Token:", token)
 
     auth.close()

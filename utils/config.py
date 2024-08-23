@@ -19,6 +19,7 @@ class Config:
             self.MONGO_URL = config["MONGO_URL"]
             self.DISCORD_TOKEN_URL = config["DISCORD_TOKEN_URL"]
             self.DISCORD_AUTH_URL = config["DISCORD_AUTH_URL"]
+            self.SECRET_KEY = config["SECRET_KEY"]
 
 
 config = Config()

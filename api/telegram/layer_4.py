@@ -1,7 +1,7 @@
 import asyncio
 import os
 from format.Media import Media
-from layer_3_2 import Layer3_2
+from api.telegram.layer_3_2 import Layer3_2
 from api.mongodb.mongodb_drive import DriveMongo
 from utils.response_handler import success, error
 from utils.config import config
@@ -17,6 +17,10 @@ class Layer4:
         self.mongo = await DriveMongo().create(config.MONGO_URL, self.client, False)
 
     # ------------------------------------------------------------------------------------------
+
+    # get mongo client
+    def get_mongo_client(self):
+        return self.mongo
 
     # Verify if client is connected -- OK
     def is_connect(self):
