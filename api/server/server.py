@@ -1,13 +1,12 @@
-import json
-
-from quart import Quart, request, jsonify, g
+from quart import Quart, session, request, jsonify, g
 from api.mongodb.mongodb_login import MongoDBLogin
 from api.telegram.layer_4 import Layer4
 from utils.config import config
 from functools import wraps
-import asyncio
+from utils.utils_functions import get_value_from_string
 
 app = Quart(__name__)
+app.secret_key = config.SECRET_KEY  # Imposta una chiave segreta
 
 layer4 = Layer4()
 
@@ -38,13 +37,11 @@ def token_required(f):
             return jsonify({'status': 'error', 'message': 'Invalid or expired token'}), 401
 
         g.token = token
-
         return await f(*args, **kwargs)
 
     return decorated
 
 
-# Login -- return auth token -- OK
 @app.route('/login', methods=['POST'])
 async def login():
     data = await request.json
@@ -57,17 +54,21 @@ async def login():
     auth = get_mongo_connection()
     token = auth.login(email, password)
     if token:
+        usr = auth.get_user_by_token(token)
+        if not usr:
+            return jsonify({'status': 'error', 'message': "Internal Error -- can't retrieve usr"}), 401
 
-        # Fetch id cluster
-        ds_id = auth.get_user_by_token(token)
-        print(ds_id)
-        if not ds_id:
-            return jsonify({'status': 'error', 'message': "Internal Error -- can't retrieve ds_id"}), 401
+        clusters_info = await layer4.get_clusters_info()
+        cluster_id_prv = get_value_from_string(clusters_info, usr["discord_id"])
+        cluster_id_pub = get_value_from_string(clusters_info, "Drive_Layer_Shared")
+        if not cluster_id_prv or not cluster_id_pub:
+            return jsonify({'status': 'error', 'message': "Internal Error -- can't retrieve cluster's id"}), 401
 
-        #clusters_info = await layer4.get_clusters_info()
-        #print(clusters_info)
+        session['cluster_id_private'] = cluster_id_prv
+        session['cluster_id_public'] = cluster_id_pub
 
-        return jsonify({'status': 'success', 'token': token}), 200
+        return jsonify({'status': 'success', 'token': token, 'cluster_id_private': cluster_id_prv,
+                        'cluster_id_public': cluster_id_pub}), 200
     else:
         return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
 
@@ -96,39 +97,65 @@ async def logout():
 @app.route('/sync-drive', methods=['POST'])
 @token_required
 async def sync_drive():
-    result = await layer4.sync_drive()
-    return jsonify(result)
+    return jsonify(await layer4.sync_drive())
 
 
-# Layer4 - Get Clusters Info -- OK
-@app.route('/clusters', methods=['POST'])
-@token_required
-async def get_clusters_info():
-    result = await layer4.get_clusters_info()
-    return jsonify(result)
-
-
-# Layer4 - Get All Files in Cluster
+# Layer4 - Get All Files in private cluster -- OK
 @app.route('/get-all-files', methods=['POST'])
 @token_required
 async def get_all_files():
-    result = await layer4.get_all_file(g.id_private_cluster)
-    return jsonify(result)
+    cluster_id_private = session.get('cluster_id_private')
+    if not cluster_id_private:
+        return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+    return jsonify(await layer4.get_all_file(int(cluster_id_private)))
 
 
-# Layer4 - Get File Info
+# Layer4 - Get All Files in public cluster -- OK
+@app.route('/get-all-files-public', methods=['POST'])
+@token_required
+async def get_all_files_public():
+    cluster_id_public = session.get('cluster_id_public')
+    if not cluster_id_public:
+        return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+    return jsonify(await layer4.get_all_file(int(cluster_id_public)))
+
+
+# Layer4 - Get File Info -- OK
 @app.route('/get-file-info', methods=['POST'])
 @token_required
 async def get_file_info():
     data = await request.json
     file_id = data.get('file_id')
+    type_cluster = data.get('type_cluster')
 
-    if not file_id:
-        return jsonify({'status': 'error', 'message': 'Cluster ID and File ID are required'}), 400
+    if not file_id or not type_cluster:
+        return jsonify({'status': 'error', 'message': 'Cluster Type and File ID are required'}), 400
 
-    result = await layer4.get_file_info(g.id_private_cluster, file_id)
-    return jsonify(result)
+    if type_cluster == 'public':
 
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.get_file_info(int(cluster_id_public), file_id)
+        return jsonify(result)
+    elif type_cluster == 'private':
+
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.get_file_info(int(cluster_id_private), file_id)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
+
+
+###############################################################
+###############################################################
+###############################################################
 
 # Layer4 - Rename File
 @app.route('/rename-file', methods=['POST'])
