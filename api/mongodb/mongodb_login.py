@@ -15,8 +15,7 @@ class MongoDBLogin:
         self.secret_key = secret_key
 
     def get_user_by_token(self, token):
-        user = self.db.users.find_one({'token': token})
-        return user
+        return self.users_collection.find_one({'token': str(token)})
 
     def hash_password(self, password: str) -> str:
         """Hash the password using SHA-256."""
@@ -99,8 +98,24 @@ if __name__ == "__main__":
 
     auth = MongoDBLogin(secret_key)
 
-    token = auth.create_user("prova1234@gmail.com", "ciao1234", "455043995509456907")
+    #token = auth.create_user("prova1234@gmail.com", "ciao1234", "455043995509456907")
+    #if token:
+    #    print("User registered and logged in successfully! Token:", token)
+
+    # Test login
+    print("\nAttempting to log in with the same user...")
+    token = auth.login("prova1234@gmail.com", "ciao1234")
     if token:
-        print("User registered and logged in successfully! Token:", token)
+        print("Login successful! Token:", token)
+    else:
+        print("Login failed!")
+
+    # Test get_user_by_token
+    print("\nRetrieving user by token...")
+    user = auth.get_user_by_token(token)
+    if user:
+        print("User retrieved successfully:", user)
+    else:
+        print("Failed to retrieve user!")
 
     auth.close()
