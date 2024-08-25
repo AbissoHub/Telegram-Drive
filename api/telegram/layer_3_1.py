@@ -8,6 +8,8 @@
 
 # nomeFile@Percorso@Visibilita
 
+# no longer maintained -- for illustrative purposes only
+
 import os
 from format.Media import Media
 from layer_2 import TelegramAPI

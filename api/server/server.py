@@ -153,70 +153,127 @@ async def get_file_info():
         return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-###############################################################
-###############################################################
-###############################################################
-
-# Layer4 - Rename File
+# Layer4 - Rename File -- OK
 @app.route('/rename-file', methods=['POST'])
 @token_required
 async def rename_file():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    type_cluster = data.get('type_cluster')
     file_id = data.get('file_id')
     new_name = data.get('new_name')
 
-    if not cluster_id or not file_id or not new_name:
-        return jsonify({'status': 'error', 'message': 'Cluster ID, File ID, and New Name are required'}), 400
+    if not type_cluster or not file_id or not new_name:
+        return jsonify({'status': 'error', 'message': 'type_cluster, File ID, and New Name are required'}), 400
 
-    result = await layer4.rename_file(cluster_id, file_id, new_name)
-    return jsonify(result)
+    if type_cluster == 'public':
+
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.rename_file(cluster_id_public, file_id, new_name)
+        return jsonify(result)
+    elif type_cluster == 'private':
+
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.rename_file(cluster_id_private, file_id, new_name)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-# Layer4 - Move File
+# Layer4 - Move File -- OK
 @app.route('/move-file', methods=['POST'])
 @token_required
 async def move_file():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    type_cluster = data.get('type_cluster')
     file_id = data.get('file_id')
     new_location = data.get('new_location')
 
-    if not cluster_id or not file_id or not new_location:
+    if not type_cluster or not file_id or not new_location:
         return jsonify({'status': 'error', 'message': 'Cluster ID, File ID, and New Location are required'}), 400
 
-    result = await layer4.move_file(cluster_id, file_id, new_location)
-    return jsonify(result)
+    if type_cluster == 'public':
+
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.move_file(cluster_id_public, file_id, new_location)
+        return jsonify(result)
+    elif type_cluster == 'private':
+
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.move_file(cluster_id_private, file_id, new_location)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-# Layer4 - Move to Trash
+# Layer4 - Move to Trash -- OK
 @app.route('/move-to-trash', methods=['POST'])
 @token_required
 async def move_to_trash():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    type_cluster = data.get('type_cluster')
     file_id = data.get('file_id')
 
-    if not cluster_id or not file_id:
+    if not type_cluster or not file_id:
         return jsonify({'status': 'error', 'message': 'Cluster ID and File ID are required'}), 400
 
-    result = await layer4.move_to_trash(cluster_id, file_id)
-    return jsonify(result)
+    if type_cluster == 'public':
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.move_to_trash(cluster_id_public, file_id)
+        return jsonify(result)
+    elif type_cluster == 'private':
+
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.move_to_trash(cluster_id_private, file_id)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-# Layer4 - Delete File
+# Layer4 - Delete File -- OK
 @app.route('/delete-file', methods=['DELETE'])
 @token_required
 async def delete_file():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    type_cluster = data.get('type_cluster')
     file_id = data.get('file_id')
 
-    if not cluster_id or not file_id:
+    if not type_cluster or not file_id:
         return jsonify({'status': 'error', 'message': 'Cluster ID and File ID are required'}), 400
 
-    result = await layer4.delete_file(cluster_id, file_id)
-    return jsonify(result)
+    if type_cluster == 'public':
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.delete_file(cluster_id_public, file_id)
+        return jsonify(result)
+    elif type_cluster == 'private':
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.delete_file(cluster_id_private, file_id)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
 # Layer4 - Upload File
