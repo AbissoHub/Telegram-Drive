@@ -6,7 +6,7 @@ from functools import wraps
 from utils.utils_functions import get_value_from_string
 
 app = Quart(__name__)
-app.secret_key = config.SECRET_KEY  # Imposta una chiave segreta
+app.secret_key = config.SECRET_KEY
 
 layer4 = Layer4()
 
@@ -67,8 +67,7 @@ async def login():
         session['cluster_id_private'] = cluster_id_prv
         session['cluster_id_public'] = cluster_id_pub
 
-        return jsonify({'status': 'success', 'token': token, 'cluster_id_private': cluster_id_prv,
-                        'cluster_id_public': cluster_id_pub}), 200
+        return jsonify({'status': 'success', 'token': token, 'user-data': usr}), 200
     else:
         return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
 
@@ -282,13 +281,28 @@ async def delete_file():
 async def upload_file():
     src_file = await request.files.get('file')
     scr_destination = await request.form.get('destination')
-    cluster_id = await request.form.get('cluster_id')
+    type_cluster = await request.form.get('type_cluster')
 
-    if not src_file or not scr_destination or not cluster_id:
-        return jsonify({'status': 'error', 'message': 'File, Destination, and Cluster ID are required'}), 400
+    if not src_file or not scr_destination or not type_cluster:
+        return jsonify({'status': 'error', 'message': 'File, Destination, and type_cluster are required'}), 400
 
-    result = await layer4.upload_file(src_file, scr_destination, cluster_id)
-    return jsonify(result)
+    if type_cluster == 'public':
+        cluster_id_public = session.get('cluster_id_public')
+        if not cluster_id_public:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+
+        result = await layer4.upload_file(src_file, scr_destination, cluster_id_public)
+        return jsonify(result)
+    elif type_cluster == 'private':
+        cluster_id_private = session.get('cluster_id_private')
+        if not cluster_id_private:
+            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+
+        result = await layer4.upload_file(src_file, scr_destination, cluster_id_private)
+        return jsonify(result)
+    else:
+        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
+
 
 
 # Layer4 - Download File
