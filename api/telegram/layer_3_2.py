@@ -109,10 +109,11 @@ class Layer3_2:
         m = None
         try:
             m = os.path.basename(src_file) + "@" + scr_destination
+            response = await self.client.upload_file(n["data"], src_file, m)
+            return response
         except Exception as e:
             return error("[LAYER-3] " + str(e))
-        response = await self.client.upload_file(n["data"], src_file, m)
-        return response
+
 
     # Download file -
     async def download_file(self, message_id, dest, cluster_id, media_name):

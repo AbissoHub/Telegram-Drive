@@ -215,12 +215,17 @@ class DriveMongo:
     async def trash_file(self, cluster_id, file_id):
         return await self.update_file_location(cluster_id, file_id, self.get_trash_path())
 
-    # Create folder
     async def create_folder(self, cluster_id, path_folder):
         try:
-            # Create the file data object
+            existing_folder = self.clusters_collection.find_one(
+                {"cluster_id": cluster_id, "files.locate_media": path_folder, "files.is_folder": True}
+            )
+
+            if existing_folder:
+                return error("A folder with the same name already exists")
+
             file_data = {
-                "id_message": -123456789,
+                "id_message": -1,
                 "media_name": "None",
                 "locate_media": path_folder,
                 "media_size": 0,
@@ -230,17 +235,31 @@ class DriveMongo:
                 "is_folder": True
             }
 
-            # Add new file to the cluster's files array
             result = self.clusters_collection.update_one(
                 {"cluster_id": cluster_id},
                 {"$push": {"files": file_data}}
             )
+
             if result.modified_count > 0:
                 return success("Folder created successfully", None)
             else:
                 return error("Cluster not found or file not inserted")
+
         except Exception as e:
             return error(f"An error occurred while inserting the folder: {e}")
+
+    async def delete_folder(self, cluster_id, path_folder):
+        try:
+            result = self.clusters_collection.update_one(
+                {"cluster_id": cluster_id},
+                {"$pull": {"files": {"locate_media": path_folder, "is_folder": True}}}
+            )
+            if result.modified_count > 0:
+                return success("Folder deleted successfully", None)
+            else:
+                return error("Cluster not found or folder not deleted")
+        except Exception as e:
+            return error(f"An error occurred while deleting the folder: {e}")
 
     # Get all folders by cluster_id
     async def get_all_folders_by_cluster_id(self, cluster_id):

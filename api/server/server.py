@@ -66,8 +66,8 @@ async def login():
 
         session['cluster_id_private'] = cluster_id_prv
         session['cluster_id_public'] = cluster_id_pub
-
-        return jsonify({'status': 'success', 'token': token, 'user-data': usr}), 200
+        print(usr)
+        return jsonify({'status': 'success', 'token': token}), 200
     else:
         return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
 
@@ -304,7 +304,6 @@ async def upload_file():
         return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-
 # Layer4 - Download File
 @app.route('/download', methods=['POST'])
 @token_required
@@ -320,6 +319,38 @@ async def download_file():
             {'status': 'error', 'message': 'Cluster ID, File ID, Destination, and File Name are required'}), 400
 
     result = await layer4.download_file(cluster_id, file_id, dest, name_file)
+    return jsonify(result)
+
+
+# Layer4 - Create Folder
+@app.route('/create-folder', methods=['POST'])
+@token_required
+async def create_folder():
+    data = await request.json
+    cluster_id = data.get('cluster_id')
+    folder_path = data.get('folder_path')
+
+    if not cluster_id or not folder_path:
+        return jsonify(
+            {'status': 'error', 'message': 'Cluster ID, Folder Path are required'}), 400
+
+    result = await layer4.create_folder(cluster_id, folder_path)
+    return jsonify(result)
+
+
+# Layer4 - Delete Folder without any file inside
+@app.route('/delete-folder', methods=['POST'])
+@token_required
+async def delete_folder():
+    data = await request.json
+    cluster_id = data.get('cluster_id')
+    folder_path = data.get('folder_path')
+
+    if not cluster_id or not folder_path:
+        return jsonify(
+            {'status': 'error', 'message': 'Cluster ID, Folder Path are required'}), 400
+
+    result = await layer4.delete_folder(cluster_id, folder_path)
     return jsonify(result)
 
 

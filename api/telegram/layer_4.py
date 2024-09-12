@@ -102,6 +102,19 @@ class Layer4:
         except Exception as e:
             return error(e)
 
+    # Create folder
+    async def create_folder(self, cluster_id, folder_path):
+        return await self.get_mongo_client().create_folder(cluster_id, folder_path)
+
+    # Create folder
+    async def delete_folder(self, cluster_id, folder_path):
+        # Get all file in folder
+        r = await self.get_mongo_client().get_files_in_folder(cluster_id, folder_path)
+        if len(r["data"] == 0):
+            return error("Unable to delete folder that contains files")
+        else:
+            return await self.get_mongo_client().delete_folder(cluster_id, folder_path)
+
 
 async def main():
     # Init layer4
@@ -112,6 +125,8 @@ async def main():
     print(await l.get_clusters_info())
     print(await l.get_file_info(4231055711, 13528))
     print(await l.sync_drive())
+
+    print(await l.delete_folder(4231055711, "./test/upload"))
 
     # print(await l.rename_file(4231055711, 13413, "pio.jpg"))
     # print(await l.move_file(4231055711, 13413, "./ciao"))
