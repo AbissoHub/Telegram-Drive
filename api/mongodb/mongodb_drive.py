@@ -158,13 +158,13 @@ class DriveMongo:
                 {"files": 1, "_id": 0}
             )
             if result and "files" in result:
-                files = [file for file in result["files"] if not file["is_folder"]]
+                files = [file for file in result["files"]]
                 return success("Get all files successfully", files)
             else:
                 return error("Cluster does not exist or no files found")
         except Exception as e:
             return error(f"Error retrieving files for cluster {cluster_id}: {e}")
-
+    
     # Delete file from database
     async def delete_file(self, cluster_id, file_id):
         try:
@@ -248,6 +248,7 @@ class DriveMongo:
         except Exception as e:
             return error(f"An error occurred while inserting the folder: {e}")
 
+    # Delete folder
     async def delete_folder(self, cluster_id, path_folder):
         try:
             result = self.clusters_collection.update_one(
@@ -260,6 +261,36 @@ class DriveMongo:
                 return error("Cluster not found or folder not deleted")
         except Exception as e:
             return error(f"An error occurred while deleting the folder: {e}")
+
+    # Rename folder
+    async def rename_folder(self, cluster_id, old_path_folder, new_path_folder):
+        try:
+            existing_folder = self.clusters_collection.find_one(
+                {"cluster_id": cluster_id, "files.locate_media": old_path_folder, "files.is_folder": True}
+            )
+
+            if not existing_folder:
+                return error("The folder does not exist with the given path")
+
+            duplicate_folder = self.clusters_collection.find_one(
+                {"cluster_id": cluster_id, "files.locate_media": new_path_folder, "files.is_folder": True}
+            )
+
+            if duplicate_folder:
+                return error("A folder with the same name already exists at the new location")
+
+            result = self.clusters_collection.update_one(
+                {"cluster_id": cluster_id, "files.locate_media": old_path_folder, "files.is_folder": True},
+                {"$set": {"files.$.locate_media": new_path_folder}}
+            )
+
+            if result.modified_count > 0:
+                return success("Folder renamed successfully", None)
+            else:
+                return error("Folder not renamed, possibly cluster not found")
+
+        except Exception as e:
+            return error(f"An error occurred while renaming the folder: {e}")
 
     # Get all folders by cluster_id
     async def get_all_folders_by_cluster_id(self, cluster_id):

@@ -47,8 +47,15 @@ class Layer4:
     async def get_all_file(self, cluster_id):
         return await self.mongo.get_all_files_by_cluster_id(cluster_id)
 
+    # Get file info by cluster_id & file_id -- OK
     async def get_file_info(self, cluster_id, file_id):
         return await self.mongo.get_file_by_id(cluster_id, file_id)
+
+    # Get file info by cluster_id & file_id -- OK
+    async def get_file_trashed(self, cluster_id):
+        r = await self.get_all_file(cluster_id)
+        filtered_data = [file for file in r['data'] if './trash' in file['locate_media']]
+        return success("Get Trashed Files", filtered_data)
 
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
@@ -102,11 +109,11 @@ class Layer4:
         except Exception as e:
             return error(e)
 
-    # Create folder
+    # Create folder -- OK
     async def create_folder(self, cluster_id, folder_path):
         return await self.get_mongo_client().create_folder(cluster_id, folder_path)
 
-    # Create folder
+    # Create folder -- OK
     async def delete_folder(self, cluster_id, folder_path):
         # Get all file in folder
         r = await self.get_mongo_client().get_files_in_folder(cluster_id, folder_path)
@@ -115,6 +122,9 @@ class Layer4:
         else:
             return await self.get_mongo_client().delete_folder(cluster_id, folder_path)
 
+    # Rename folder
+    async def rename_folder(self, cluster_id, old_path_folder, new_path_folder):
+        return await self.get_mongo_client().rename_folder(cluster_id, old_path_folder, new_path_folder)
 
 async def main():
     # Init layer4
@@ -122,11 +132,13 @@ async def main():
     await l.initialize()
 
     print(await l.get_all_file(4231055711))
-    print(await l.get_clusters_info())
-    print(await l.get_file_info(4231055711, 13528))
-    print(await l.sync_drive())
+    # print(await l.get_clusters_info())
+    # print(await l.get_file_info(4231055711, 13528))
+    # print(await l.sync_drive())
 
-    print(await l.delete_folder(4231055711, "./test/upload"))
+    # print(await l.create_folder(4231055711, "./aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+
+    print(await l.get_clusters_info())
 
     # print(await l.rename_file(4231055711, 13413, "pio.jpg"))
     # print(await l.move_file(4231055711, 13413, "./ciao"))
