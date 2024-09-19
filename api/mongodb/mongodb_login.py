@@ -25,8 +25,7 @@ class MongoDBLogin:
         """Validate if the provided password matches the hashed password."""
         return self.hash_password(password) == hashed
 
-    def create_user(self, email: str, password: str, discord_id: str, role: str = "user") -> Optional[str]:
-        """Create a new user with the provided email and password."""
+    def create_user(self, email: str, password: str, discord_id: str, url_avatar: str, role: str = "user") -> Optional[str]:
         if self.users_collection.find_one({"email": email}):
             return None  # Email already exists
 
@@ -37,6 +36,7 @@ class MongoDBLogin:
             "created_at": datetime.datetime.utcnow(),
             "last_login": None,
             "discord_id": discord_id,
+            "url_avatar": url_avatar,
             "role": role
         }
         self.users_collection.insert_one(user_data)

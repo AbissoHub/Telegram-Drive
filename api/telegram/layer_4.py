@@ -51,11 +51,25 @@ class Layer4:
     async def get_file_info(self, cluster_id, file_id):
         return await self.mongo.get_file_by_id(cluster_id, file_id)
 
-    # Get file info by cluster_id & file_id -- OK
-    async def get_file_trashed(self, cluster_id):
-        r = await self.get_all_file(cluster_id)
-        filtered_data = [file for file in r['data'] if './trash' in file['locate_media']]
-        return success("Get Trashed Files", filtered_data)
+    # Get trashed files
+    async def get_file_trashed(self):
+        r = await self.get_clusters_info()
+        all_data = []
+
+        for v in r.values():
+            response = await self.get_mongo_client().get_all_files_trashed(int(v))
+            print(response)
+            # Controlla lo status
+            if response['status'] == 'success':
+                all_data.extend(response['data'])
+            else:
+                return error("Error getting trashed files")
+
+        return success("Get all trashed files", all_data)
+
+    # Get all folders by cluster_id
+    async def get_all_folders_by_cluster_id(self, cluster_id):
+        return await self.get_mongo_client().get_all_folders_by_cluster_id(cluster_id)
 
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
@@ -69,24 +83,30 @@ class Layer4:
     async def move_file(self, cluster_id, file_id, new_location):
         return await self.mongo.update_file_location(cluster_id, file_id, new_location)
 
-    # Trash basket file -- OK
-    async def move_to_trash(self, cluster_id, file_id):
-        return await self.mongo.trash_file(cluster_id, file_id)
-
     # Delete file -- OK but the function doesn't return correctly ( + loop )
     async def delete_file(self, cluster_id, file_id):
-        try:
-            r1 = await self.mongo.delete_file(cluster_id, file_id)
-            r2 = await self.client.delete_file(file_id, cluster_id)
 
-            if r1['status'] == 'error':
-                return error(r1["message"])
-            elif r2['status'] == 'error':
-                return error(r2["message"])
+        file = await self.mongo.get_file_by_id(cluster_id, file_id)
+
+        if file["status"] != "success":
+            return file
+        else:
+            if file["data"]["locate_media"] == "./trash":
+                # Delete
+                try:
+                    r1 = await self.mongo.delete_file(cluster_id, file_id)
+                    r2 = await self.client.delete_file(file_id, cluster_id)
+
+                    if r1['status'] == 'error':
+                        return error(r1["message"])
+                    elif r2['status'] == 'error':
+                        return error(r2["message"])
+                    else:
+                        return success("File deleted successfully", None)
+                except Exception as e:
+                    return error(e)
             else:
-                return success("File deleted successfully", None)
-        except Exception as e:
-            return error(e)
+                return await self.mongo.trash_file(cluster_id, file_id)
 
     # Upload file -- OK but the function doesn't return correctly ( + loop )
     async def upload_file(self, src_file, scr_destination, cluster_id):
@@ -126,19 +146,20 @@ class Layer4:
     async def rename_folder(self, cluster_id, old_path_folder, new_path_folder):
         return await self.get_mongo_client().rename_folder(cluster_id, old_path_folder, new_path_folder)
 
+
 async def main():
     # Init layer4
     l = Layer4()
     await l.initialize()
 
-    print(await l.get_all_file(4231055711))
+    # print(await l.get_all_file(4231055711))
     # print(await l.get_clusters_info())
     # print(await l.get_file_info(4231055711, 13528))
     # print(await l.sync_drive())
 
     # print(await l.create_folder(4231055711, "./aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
 
-    print(await l.get_clusters_info())
+    print(await l.get_all_folders_by_cluster_id(4231055711))
 
     # print(await l.rename_file(4231055711, 13413, "pio.jpg"))
     # print(await l.move_file(4231055711, 13413, "./ciao"))

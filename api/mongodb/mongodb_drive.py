@@ -1,11 +1,13 @@
-# Module to interact with mongodb api to manage storage of telegram's files:
 import asyncio
+import re
 import uuid
 from pymongo.errors import ConnectionFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from datetime import datetime
 from utils.response_handler import success, error
+
+VALID_FILE_NAME_REGEX = r'^[\w\-.]+$'
 
 
 class DriveMongo:
@@ -150,7 +152,6 @@ class DriveMongo:
         except Exception as e:
             return error(f"File does not exist {e}")
 
-    # Get all files by cluster_id
     async def get_all_files_by_cluster_id(self, cluster_id):
         try:
             result = self.clusters_collection.find_one(
@@ -158,13 +159,37 @@ class DriveMongo:
                 {"files": 1, "_id": 0}
             )
             if result and "files" in result:
-                files = [file for file in result["files"]]
-                return success("Get all files successfully", files)
+                files = [file for file in result["files"] if file.get("locate_media") != "./trash"]
+                if files:
+                    for file in files:
+                        file["cluster_id"] = cluster_id
+                    return success("Get all files successfully", files)
+                else:
+                    return error("No files found after filtering")
             else:
                 return error("Cluster does not exist or no files found")
         except Exception as e:
             return error(f"Error retrieving files for cluster {cluster_id}: {e}")
-    
+
+    async def get_all_files_trashed(self, cluster_id):
+        try:
+            result = self.clusters_collection.find_one(
+                {"cluster_id": cluster_id},
+                {"files": 1, "_id": 0}
+            )
+            if result and "files" in result:
+                trashed_files = [file for file in result["files"] if file.get("locate_media") == "./trash"]
+                if trashed_files:
+                    for file in trashed_files:
+                        file["cluster_id"] = cluster_id
+
+                return success("Get all trashed files successfully", trashed_files)
+
+            else:
+                return error("Cluster does not exist or no files found")
+        except Exception as e:
+            return error(f"Error retrieving trashed files for cluster {cluster_id}: {e}")
+
     # Delete file from database
     async def delete_file(self, cluster_id, file_id):
         try:
@@ -179,13 +204,23 @@ class DriveMongo:
         except Exception as e:
             error(f"An error occurred while deleting the file: {e}")
 
-    # Method to update file name
+    # Method to update file name and date
     async def update_file_name(self, cluster_id, file_id, new_name):
         try:
+
+            # Check new name
+            if not re.match(VALID_FILE_NAME_REGEX, new_name):
+                return error("new name contains invalid characters")
+
+            # Get current date and time
+            current_date = datetime.utcnow()
+
+            # Update the file name and date
             result = self.clusters_collection.update_one(
                 {"cluster_id": int(cluster_id), "files.id_message": str(file_id)},
                 {"$set": {
-                    "files.$.media_name": new_name
+                    "files.$.media_name": new_name,
+                    "files.$.date": current_date
                 }}
             )
             if result.matched_count > 0:
@@ -193,7 +228,7 @@ class DriveMongo:
             else:
                 return error("File not found")
         except Exception as e:
-            error(f"An error occurred while updating the file name: {e}")
+            return error(f"An error occurred while updating the file name: {e}")
 
     # Method to update file location
     async def update_file_location(self, cluster_id, file_id, new_location):
