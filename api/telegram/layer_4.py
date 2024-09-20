@@ -58,8 +58,7 @@ class Layer4:
 
         for v in r.values():
             response = await self.get_mongo_client().get_all_files_trashed(int(v))
-            print(response)
-            # Controlla lo status
+            #print(response)
             if response['status'] == 'success':
                 all_data.extend(response['data'])
             else:
@@ -136,7 +135,8 @@ class Layer4:
     async def delete_folder(self, cluster_id, folder_path):
         # Get all file in folder
         r = await self.get_mongo_client().get_files_in_folder(cluster_id, folder_path)
-        if len(r["data"] == 0):
+        #print(r)
+        if len(r["data"]) != 0:
             return error("Unable to delete folder that contains files")
         else:
             return await self.get_mongo_client().delete_folder(cluster_id, folder_path)

@@ -279,7 +279,7 @@ class DriveMongo:
             if result.modified_count > 0:
                 return success("Folder created successfully", None)
             else:
-                return error("Cluster not found or file not inserted")
+                return error("Cluster not found")
 
         except Exception as e:
             return error(f"An error occurred while inserting the folder: {e}")

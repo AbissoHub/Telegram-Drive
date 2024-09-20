@@ -202,6 +202,13 @@ async def get_folders():
         return jsonify(result)
 
 
+# Layer4 - Get all folder by cluster_id -- OK
+@app.route('/get-clusters-info', methods=['GET'])
+@token_required
+async def get_clusters_info():
+    return jsonify({'status': 'success', 'message': 'Successfully', 'data': await layer4.get_clusters_info()})
+
+
 # Layer4 - Delete File -- OK
 @app.route('/delete-file', methods=['POST'])
 @token_required
@@ -221,9 +228,11 @@ async def delete_file():
 @app.route('/upload', methods=['POST'])
 @token_required
 async def upload_file():
-    src_file = await request.files.get('file')
-    scr_destination = await request.form.get('destination')
-    type_cluster = await request.form.get('type_cluster')
+    data = await request.json
+
+    src_file = data.get('file')
+    scr_destination = data.get('destination')
+    type_cluster = data.get('type_cluster')
 
     if not src_file or not scr_destination or not type_cluster:
         return jsonify({'status': 'error', 'message': 'File, Destination, and type_cluster are required'}), 400
@@ -275,12 +284,13 @@ async def download_file():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+
 # Layer4 - Create Folder
 @app.route('/create-folder', methods=['POST'])
 @token_required
 async def create_folder():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    cluster_id = data.get('c')
     folder_path = data.get('folder_path')
 
     if not cluster_id or not folder_path:
@@ -296,7 +306,7 @@ async def create_folder():
 @token_required
 async def delete_folder():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    cluster_id = data.get('c')
     folder_path = data.get('folder_path')
 
     if not cluster_id or not folder_path:
