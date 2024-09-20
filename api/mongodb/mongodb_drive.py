@@ -1,4 +1,5 @@
 import asyncio
+import os
 import re
 import uuid
 from pymongo.errors import ConnectionFailure
@@ -298,7 +299,7 @@ class DriveMongo:
             return error(f"An error occurred while deleting the folder: {e}")
 
     # Rename folder
-    async def rename_folder(self, cluster_id, old_path_folder, new_path_folder):
+    async def rename_folder(self, cluster_id, old_path_folder, new_name):
         try:
             existing_folder = self.clusters_collection.find_one(
                 {"cluster_id": cluster_id, "files.locate_media": old_path_folder, "files.is_folder": True}
@@ -306,6 +307,9 @@ class DriveMongo:
 
             if not existing_folder:
                 return error("The folder does not exist with the given path")
+
+            base_path = os.path.dirname(old_path_folder)
+            new_path_folder = os.path.join(base_path, new_name)
 
             duplicate_folder = self.clusters_collection.find_one(
                 {"cluster_id": cluster_id, "files.locate_media": new_path_folder, "files.is_folder": True}

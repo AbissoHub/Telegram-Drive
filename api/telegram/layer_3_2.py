@@ -114,19 +114,17 @@ class Layer3_2:
         except Exception as e:
             return error("[LAYER-3] " + str(e))
 
-
     # Download file -
-    async def download_file(self, message_id, dest, cluster_id, media_name):
-
+    async def download_file(self, message_id, cluster_id):
         n = await self.client.get_dialog_object_by_id(cluster_id)
         if n["status"] == "error":
-            return error(n["message"])
+            raise Exception(n["message"])
 
         m = await self.client.get_native_message_instance(n["data"], message_id)
         if m["status"] == "error":
-            return error(m["message"])
-        response = await self.client.download_file_by_Media(m["data"], str(dest) + media_name)
-        return response
+            raise Exception(m["message"])
+
+        return self.client.iter_download_file_by_Media(m["data"])
 
     # Remove definitive object from database -
     async def delete_file(self, message_id, cluster_id):

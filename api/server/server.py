@@ -1,4 +1,6 @@
-from quart import Quart, session, request, jsonify, g
+import asyncio
+
+from quart import Quart, session, request, jsonify, g, Response
 from api.mongodb.mongodb_login import MongoDBLogin
 from api.telegram.layer_4 import Layer4
 from utils.config import config
@@ -244,23 +246,34 @@ async def upload_file():
         return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
 
 
-# Layer4 - Download File
 @app.route('/download', methods=['POST'])
 @token_required
 async def download_file():
     data = await request.json
     cluster_id = data.get('cluster_id')
     file_id = data.get('file_id')
-    dest = data.get('dest')
     name_file = data.get('name_file')
 
-    if not cluster_id or not file_id or not dest or not name_file:
+    if not cluster_id or not file_id or not name_file:
         return jsonify(
-            {'status': 'error', 'message': 'Cluster ID, File ID, Destination, and File Name are required'}), 400
+            {'status': 'error', 'message': 'Cluster ID, File ID, and File Name are required'}), 400
 
-    result = await layer4.download_file(cluster_id, file_id, dest, name_file)
-    return jsonify(result)
+    try:
+        async_gen = await layer4.download_file(cluster_id, file_id)
 
+        async def generate():
+            try:
+                async for chunk in async_gen:
+                    yield chunk
+            except Exception as e:
+                print(f"Errore durante il download: {e}")
+
+        headers = {
+            'Content-Disposition': f'attachment; filename="{name_file}"'
+        }
+        return Response(generate(), headers=headers, content_type='application/octet-stream')
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # Layer4 - Create Folder
 @app.route('/create-folder', methods=['POST'])
@@ -299,17 +312,17 @@ async def delete_folder():
 @token_required
 async def rename_folder():
     data = await request.json
-    cluster_id = data.get('cluster_id')
+    cluster_id = data.get('c')
     old_path_folder = data.get('old_path_folder')
-    new_folder_path = data.get('new_folder_path')
+    new_name = data.get('new_name')
 
-    if not cluster_id or not old_path_folder or not new_folder_path:
+    if not cluster_id or not old_path_folder or not new_name:
         return jsonify(
             {'status': 'error', 'message': 'Cluster ID, Folder Paths are required'}), 400
 
-    result = await layer4.rename_folder(cluster_id, old_path_folder, new_folder_path)
+    result = await layer4.rename_folder(cluster_id, old_path_folder, new_name)
     return jsonify(result)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='192.168.1.249', port=5000)

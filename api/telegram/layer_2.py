@@ -1,3 +1,5 @@
+import asyncio
+
 from telethon import TelegramClient
 from telethon.types import Message
 from telethon.tl.types import InputMessagesFilterDocument
@@ -171,14 +173,20 @@ class TelegramAPI:
             return error("[LAYER-2] " + str(e))
 
     @ensure_connected
-    async def download_file_by_Media(self, m, download_path):
+    async def download_file_by_Media(self, m):
         """Download file by Media object."""
         try:
-            s = await self.client.download_media(m, download_path, progress_callback=callback_download_progress)
-            print(s)
-            return success("File downloaded successfully", None)
+            async def async_data_generator():
+                async for chunk in self.client.iter_download(m):
+                    yield chunk
+
+            return success("File downloaded successfully", async_data_generator)
         except Exception as e:
             return error("[LAYER-2] " + str(e))
+
+    async def iter_download_file_by_Media(self, media, chunk_size=8192):
+        async for chunk in self.client.iter_download(media, chunk_size=chunk_size):
+            yield chunk
 
     @ensure_connected
     async def upload_file(self, m, file_path, message):

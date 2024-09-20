@@ -4,4 +4,4 @@ def success(message, data):
 
 
 def error(message):
-    return {'status': 'error', 'message': message}
+    return {'status': 'error', 'message': str(message)}

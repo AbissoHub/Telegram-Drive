@@ -121,13 +121,12 @@ class Layer4:
         except Exception as e:
             return error(e)
 
-    # Download file -- OK
-    async def download_file(self, cluster_id, file_id, dest, name_file):
+    async def download_file(self, cluster_id, file_id):
         try:
-            r1 = await self.client.download_file(file_id, dest, cluster_id, name_file)
-            return r1
+            async_gen = await self.client.download_file(file_id, cluster_id)
+            return async_gen
         except Exception as e:
-            return error(e)
+            raise e
 
     # Create folder -- OK
     async def create_folder(self, cluster_id, folder_path):
@@ -143,8 +142,8 @@ class Layer4:
             return await self.get_mongo_client().delete_folder(cluster_id, folder_path)
 
     # Rename folder
-    async def rename_folder(self, cluster_id, old_path_folder, new_path_folder):
-        return await self.get_mongo_client().rename_folder(cluster_id, old_path_folder, new_path_folder)
+    async def rename_folder(self, cluster_id, old_path_folder, new_name):
+        return await self.get_mongo_client().rename_folder(cluster_id, old_path_folder, new_name)
 
 
 async def main():
