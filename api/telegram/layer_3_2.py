@@ -101,18 +101,17 @@ class Layer3_2:
     # POST ACTION
 
     # Upload file to drive -
-    async def upload_file(self, src_file, scr_destination, cluster_id):
+    async def upload_file(self, file, scr_destination, cluster_id, file_size):
         n = await self.client.get_dialog_object_by_id(cluster_id)
         if n["status"] == "error":
-            return error(n["message"])
+            return {'status': 'error', 'message': n["message"]}
 
-        m = None
         try:
-            m = os.path.basename(src_file) + "@" + scr_destination
-            response = await self.client.upload_file(n["data"], src_file, m)
+            message = f"{file.filename}@{scr_destination}"
+            response = await self.client.upload_file(n["data"], file, message, file_size)
             return response
         except Exception as e:
-            return error("[LAYER-3] " + str(e))
+            return {'status': 'error', 'message': "[LAYER-3] " + str(e)}
 
     # Download file -
     async def download_file(self, message_id, cluster_id):

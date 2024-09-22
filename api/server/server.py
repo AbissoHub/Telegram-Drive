@@ -85,7 +85,7 @@ async def verify_token():
 
 @app.route('/ping-pong', methods=['GET'])
 async def ping():
-    print(layer4.is_connect())
+    #print(layer4.is_connect())
     return jsonify({'status': 'success', 'message': layer4.is_connect()})
 
 
@@ -196,7 +196,7 @@ async def get_folders():
     id_cluster = data.get('c')
 
     if not id_cluster:
-        return jsonify({'status': 'error', 'message': 'C are required'}), 400
+        return jsonify({'status': 'error', 'message': 'C is required'}), 400
     else:
         result = await layer4.get_all_folders_by_cluster_id(id_cluster)
         return jsonify(result)
@@ -228,31 +228,27 @@ async def delete_file():
 @app.route('/upload', methods=['POST'])
 @token_required
 async def upload_file():
-    data = await request.json
+    form = await request.form
+    files = await request.files
 
-    src_file = data.get('file')
-    scr_destination = data.get('destination')
-    type_cluster = data.get('type_cluster')
+    if 'file' not in files:
+        return jsonify({'status': 'error', 'message': 'Il file è richiesto'}), 400
 
-    if not src_file or not scr_destination or not type_cluster:
-        return jsonify({'status': 'error', 'message': 'File, Destination, and type_cluster are required'}), 400
+    file = files['file']
+    scr_destination = form.get('destination')
+    id_cluster = form.get('c')
+    file_size = form.get('file_size')
 
-    if type_cluster == 'public':
-        cluster_id_public = session.get('cluster_id_public')
-        if not cluster_id_public:
-            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_public not found"}), 500
+    if not file or not scr_destination or not id_cluster or not file_size:
+        return jsonify({'status': 'error', 'message': 'File, Destination, id_cluster e file_size sono richiesti'}), 400
 
-        result = await layer4.upload_file(src_file, scr_destination, cluster_id_public)
-        return jsonify(result)
-    elif type_cluster == 'private':
-        cluster_id_private = session.get('cluster_id_private')
-        if not cluster_id_private:
-            return jsonify({'status': 'error', 'message': "Internal Error -- cluster_id_private not found"}), 500
+    try:
+        file_size = int(file_size)
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'file_size deve essere un intero'}), 400
 
-        result = await layer4.upload_file(src_file, scr_destination, cluster_id_private)
-        return jsonify(result)
-    else:
-        return jsonify({'status': 'error', 'message': "Internal Error -- type_cluster not found"}), 500
+    result = await layer4.upload_file(file, scr_destination, id_cluster, file_size)
+    return jsonify(result)
 
 
 @app.route('/download', methods=['POST'])

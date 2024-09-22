@@ -189,21 +189,30 @@ class TelegramAPI:
             yield chunk
 
     @ensure_connected
-    async def upload_file(self, m, file_path, message):
-        """Upload a file to a chat."""
+    async def upload_file(self, chat, file_storage, message, file_size):
         try:
-            await self.client.send_file(m, file_path, caption=message, force_document=True,
-                                        progress_callback=callback_upload_progress)
-            return success("File uploaded successfully", None)
+            input_file = await self.client.upload_file(
+                file=file_storage.stream,
+                file_size=file_size,
+                file_name=file_storage.filename
+            )
+
+            await self.client.send_file(
+                chat,
+                file=input_file,
+                caption=message,
+                force_document=True
+            )
+            return {'status': 'success', 'message': "File caricato con successo"}
         except Exception as e:
-            return error("[LAYER-2] " + str(e))
+            return {'status': 'error', 'message': "[LAYER-2] " + str(e)}
 
     @ensure_connected
     async def edit_message_by_message_instance(self, mess, new_message):
         """Edit a message by chat ID and message ID."""
         try:
             t = await self.client.edit_message(mess, new_message)
-            #print(t)
+            # print(t)
             if str(t.message) == str(new_message):
                 return success("Message edited successfully", None)
         except Exception as e:
@@ -217,7 +226,3 @@ class TelegramAPI:
             return success("File deleted successfully", None)
         except Exception as e:
             return error("[LAYER-2] " + str(e))
-
-
-
-

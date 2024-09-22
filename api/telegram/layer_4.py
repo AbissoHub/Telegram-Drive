@@ -108,17 +108,16 @@ class Layer4:
                 return await self.mongo.trash_file(cluster_id, file_id)
 
     # Upload file -- OK but the function doesn't return correctly ( + loop )
-    async def upload_file(self, src_file, scr_destination, cluster_id):
-        # Upload
+    async def upload_file(self, file, scr_destination, cluster_id, file_size):
         try:
-            r1 = await self.client.upload_file(src_file, scr_destination, cluster_id)
+            r1 = await self.client.upload_file(file, scr_destination, cluster_id, file_size)
             if r1['status'] == 'error':
-                return error(r1["message"])
+                return {'status': 'error', 'message': r1["message"]}
             else:
                 await self.sync_drive()
                 return r1
         except Exception as e:
-            return error(e)
+            return {'status': 'error', 'message': str(e)}
 
     async def download_file(self, cluster_id, file_id):
         try:
