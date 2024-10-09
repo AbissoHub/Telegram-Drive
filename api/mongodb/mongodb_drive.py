@@ -377,3 +377,26 @@ class DriveMongo:
                 return error("Cluster or folder does not exist or no files found")
         except Exception as e:
             return error(f"Error retrieving files for folder {folder_path} including subfolders: {e}")
+
+    # Verifica se una cartella ha sottocartelle
+    async def has_subfolders(self, cluster_id, folder_path):
+        try:
+            result = self.clusters_collection.find_one(
+                {"cluster_id": cluster_id},
+                {"files": 1, "_id": 0}
+            )
+            if result and "files" in result:
+                subfolders = [
+                    file for file in result["files"]
+                    if file["is_folder"] and
+                       file["locate_media"].startswith(folder_path.rstrip('/') + '/') and
+                       file["locate_media"] != folder_path
+                ]
+                if subfolders:
+                    return success("Subfolders found", True)
+                else:
+                    return success("Any Subfolders found", False)
+            else:
+                return error("Cluster or folder does not exist or no files found")
+        except Exception as e:
+            error(f"Error retrieving files for folder {folder_path} including subfolders: {e}")

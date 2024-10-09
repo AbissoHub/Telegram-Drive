@@ -51,14 +51,13 @@ class Layer4:
     async def get_file_info(self, cluster_id, file_id):
         return await self.mongo.get_file_by_id(cluster_id, file_id)
 
-    # Get trashed files
+    # Get trashed files -- OK
     async def get_file_trashed(self):
         r = await self.get_clusters_info()
         all_data = []
 
         for v in r.values():
             response = await self.get_mongo_client().get_all_files_trashed(int(v))
-            #print(response)
             if response['status'] == 'success':
                 all_data.extend(response['data'])
             else:
@@ -82,7 +81,7 @@ class Layer4:
     async def move_file(self, cluster_id, file_id, new_location):
         return await self.mongo.update_file_location(cluster_id, file_id, new_location)
 
-    # Delete file -- OK but the function doesn't return correctly ( + loop )
+    # Delete file -- OK
     async def delete_file(self, cluster_id, file_id):
 
         file = await self.mongo.get_file_by_id(cluster_id, file_id)
@@ -107,7 +106,7 @@ class Layer4:
             else:
                 return await self.mongo.trash_file(cluster_id, file_id)
 
-    # Upload file -- OK but the function doesn't return correctly ( + loop )
+    # Upload file -- OK
     async def upload_file(self, file, scr_destination, cluster_id, file_size):
         try:
             r1 = await self.client.upload_file(file, scr_destination, cluster_id, file_size)
@@ -133,12 +132,15 @@ class Layer4:
     # Create folder -- OK
     async def delete_folder(self, cluster_id, folder_path):
         # Get all file in folder
-        r = await self.get_mongo_client().get_files_in_folder(cluster_id, folder_path)
-        #print(r)
+        r = await self.get_mongo_client().get_files_in_folder_including_subfolders(cluster_id, folder_path)
         if len(r["data"]) != 0:
             return error("Unable to delete folder that contains files")
-        else:
-            return await self.get_mongo_client().delete_folder(cluster_id, folder_path)
+
+        r = await self.get_mongo_client().has_subfolders(cluster_id, folder_path)
+        if r["data"]:
+            return error("Unable to delete folder that contains subfolders")
+
+        return await self.get_mongo_client().delete_folder(cluster_id, folder_path)
 
     # Rename folder
     async def rename_folder(self, cluster_id, old_path_folder, new_name):
@@ -150,22 +152,6 @@ async def main():
     l = Layer4()
     await l.initialize()
 
-    # print(await l.get_all_file(4231055711))
-    # print(await l.get_clusters_info())
-    # print(await l.get_file_info(4231055711, 13528))
-    # print(await l.sync_drive())
-
-    # print(await l.create_folder(4231055711, "./aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
-
-    print(await l.get_all_folders_by_cluster_id(4231055711))
-
-    # print(await l.rename_file(4231055711, 13413, "pio.jpg"))
-    # print(await l.move_file(4231055711, 13413, "./ciao"))
-    # print(await l.move_to_trash(4231055711, 13413))
-
-    # print(await l.delete_file(4231055711, 13413))
-    # print(await l.upload_file("sample.pdf", "./test/upload", 4231055711))
-    # print(await l.download_file(4231055711, 13528, "", "sample.pdf"))
 
 
 if __name__ == "__main__":
