@@ -1,26 +1,62 @@
+import os
 from pathlib import Path
-import json
+from dotenv import load_dotenv
+
+
+class ConfigError(Exception):
+    """Custom exception for configuration errors"""
+    pass
 
 
 class Config:
-    def __init__(self, config_path=None):
-        if config_path is None:
+    def __init__(self, env_path=None):
+        if env_path is None:
             base_path = Path(__file__).parent
-            config_path = base_path / '../settings/settingPRIVATE.json'
+            env_path = base_path / '../.env'
 
-        config_path = config_path.resolve()
+        env_path = env_path.resolve()
 
-        with config_path.open('r') as config_file:
-            config = json.load(config_file)
-            self.API_ID = config['API_ID']
-            self.API_HASH = config['API_HASH']
-            self.PHONE = config['PHONE']
-            self.USERS = config["USERS"]
-            self.MONGO_URL = config["MONGO_URL"]
-            self.DISCORD_TOKEN_URL = config["DISCORD_TOKEN_URL"]
-            self.DISCORD_AUTH_URL = config["DISCORD_AUTH_URL"]
-            self.SECRET_KEY = config["SECRET_KEY"]
+        # Load the environment variables from the .env file
+        load_dotenv(dotenv_path=env_path)
+
+        # Fetch the environment variables with checks
+        self.API_ID = os.getenv('API_ID')
+        self.API_HASH = os.getenv('API_HASH')
+        self.PHONE = os.getenv('PHONE')
+        self.MONGO_URL = os.getenv('MONGO_URL')
+        self.DISCORD_TOKEN_URL = os.getenv('DISCORD_TOKEN_URL')
+        self.DISCORD_AUTH_URL = os.getenv('DISCORD_AUTH_URL')
+        self.SECRET_KEY = os.getenv('SECRET_KEY')
+
+        # Convert USERS from a string to a list
+        users = os.getenv("USERS")
+        self.USERS = users.split(',') if users else []
+
+        # Validate required configurations
+        self.validate()
+
+    def validate(self):
+        """Validate all required configurations are loaded properly."""
+        missing = []
+
+        # Check each required config, add to missing list if not found
+        if not self.API_ID:
+            missing.append('API_ID')
+        if not self.API_HASH:
+            missing.append('API_HASH')
+        if not self.PHONE:
+            missing.append('PHONE')
+        if not self.MONGO_URL:
+            missing.append('MONGO_URL')
+        if not self.SECRET_KEY:
+            missing.append('SECRET_KEY')
+
+        # If any required configuration is missing, raise an error
+        if missing:
+            raise ConfigError(f"Missing required config values: {', '.join(missing)}")
 
 
-config = Config()
-
+try:
+    config = Config()
+except ConfigError as e:
+    print(f"Fatal error: {e}")
