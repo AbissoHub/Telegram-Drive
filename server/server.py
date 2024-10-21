@@ -332,5 +332,3 @@ async def rename_folder():
     return jsonify(result)
 
 
-if __name__ == '__main__':
-    app.run(host='192.168.1.11', port=5000)
