@@ -1,5 +1,4 @@
 import hashlib
-import pymongo
 import jwt
 import datetime
 from pymongo import MongoClient

@@ -6,8 +6,6 @@
 
 # Telegram is used by layer to store data and not organised metadata. Only folder logic is implemented in layer
 
-import os
-from format.Media import Media
 from api.telegram.layer_2 import TelegramAPI
 from utils.response_handler import success, error
 

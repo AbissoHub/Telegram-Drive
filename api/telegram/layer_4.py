@@ -1,6 +1,4 @@
 import asyncio
-import os
-from format.Media import Media
 from api.telegram.layer_3_2 import Layer3_2
 from api.mongodb.mongodb_drive import DriveMongo
 from utils.response_handler import success, error

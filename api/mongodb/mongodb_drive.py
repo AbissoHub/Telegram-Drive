@@ -1,7 +1,5 @@
-import asyncio
 import os
 import re
-import uuid
 from pymongo.errors import ConnectionFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi

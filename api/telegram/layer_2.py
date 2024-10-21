@@ -1,11 +1,7 @@
-import asyncio
-
 from telethon import TelegramClient
 from telethon.types import Message
-from telethon.tl.types import InputMessagesFilterDocument
 from utils.config import config
 from utils.response_handler import success, error
-import os
 import functools
 from format.Media import Media
 

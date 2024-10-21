@@ -1,5 +1,3 @@
-import asyncio
-
 from quart import Quart, session, request, jsonify, g, Response
 from api.mongodb.mongodb_login import MongoDBLogin
 from api.telegram.layer_4 import Layer4
