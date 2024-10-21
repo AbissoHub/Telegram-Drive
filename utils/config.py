@@ -28,6 +28,9 @@ class Config:
         self.DISCORD_AUTH_URL = os.getenv('DISCORD_AUTH_URL')
         self.SECRET_KEY = os.getenv('SECRET_KEY')
 
+        # Fetch the port, using 5000 as the default if not set
+        self.PORT = os.getenv('PORT', '5000')
+
         # Convert USERS from a string to a list
         users = os.getenv("USERS")
         self.USERS = users.split(',') if users else []
@@ -60,3 +63,4 @@ try:
     config = Config()
 except ConfigError as e:
     print(f"Fatal error: {e}")
+    exit(1)
