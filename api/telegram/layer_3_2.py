@@ -113,7 +113,7 @@ class Layer3_2:
         except Exception as e:
             return {'status': 'error', 'message': "[LAYER-3] " + str(e)}
 
-    # Download file -
+    # Download file - OK
     async def download_file(self, message_id, cluster_id):
         n = await self.client.get_dialog_object_by_id(cluster_id)
         if n["status"] == "error":

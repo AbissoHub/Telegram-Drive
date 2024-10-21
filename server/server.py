@@ -10,6 +10,8 @@ from quart_cors import cors
 
 app = Quart(__name__)
 app.secret_key = config.SECRET_KEY
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+
 
 app = cors(app, allow_origin="*")
 
