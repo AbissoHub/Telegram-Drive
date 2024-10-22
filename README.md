@@ -58,7 +58,7 @@ Telegram-Drive/
 4. **Register Users**
    Using module `user_management.py` register user you want in storage (you can do this later, but you won't be able to access the drive properly)
 
-5  **Run the Server:**
+5.  **Run the Server:**
    ```bash
    python main.py
    ```
