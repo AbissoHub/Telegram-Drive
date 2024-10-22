@@ -202,13 +202,6 @@ async def get_folders():
         return jsonify(result)
 
 
-# Layer4 - Get all folder by cluster_id -- OK
-@app.route('/get-clusters-info', methods=['GET'])
-@token_required
-async def get_clusters_info():
-    return jsonify({'status': 'success', 'message': 'Successfully', 'data': await layer4.get_clusters_info()})
-
-
 # Layer4 - Delete File -- OK
 @app.route('/delete-file', methods=['POST'])
 @token_required

@@ -48,7 +48,7 @@ class DriveMongo:
     async def sync_data(self, layer):
         try:
             for cluster_name in layer.get_clusters_info():
-                # print(layer.get_clusters_info())
+                print(cluster_name)
                 n = await layer.get_chat_id_by_name(cluster_name)
                 # print(n)
                 if n["status"] == "error":
@@ -59,7 +59,7 @@ class DriveMongo:
                 # Check if the cluster_id already exists in the database
                 existing_cluster = self.clusters_collection.find_one({"cluster_id": cluster_id})
                 if not existing_cluster:
-                    print(f"[INFO] Cluster {cluster_name} with ID {cluster_id} already exists in the database.")
+                    print(f"[INFO] Creating cluster {cluster_name} with ID {cluster_id} in the database.")
                     # Insert new cluster if it does not exist
                     new_cluster = {
                         "cluster_id": cluster_id,
@@ -73,8 +73,9 @@ class DriveMongo:
                     raise Exception(r['message'])
 
                 for file in r["data"]:
-                    # print(self.__get_file_by_name_and_id(file.get_media_name(), file.get_id_message()))
-                    if self.__get_file_by_id(file.get_id_message()) is None:
+                    # print(file)
+                    #print(self.__get_file_by_id(file.get_id_message()))
+                    if self.__get_file_by_id(file.get_id_message(), cluster_name) is None:
                         # Media not found in mongodb --> add media
 
                         # Create the new file document
@@ -102,13 +103,14 @@ class DriveMongo:
             return error(f"Error sync data telegram-mongodb {e}")
 
     @classmethod
-    async def create(cls, url, layer, init):
+    async def create(cls, url, init):
         instance = cls()
         try:
             instance.client = MongoClient(url, server_api=ServerApi('1'))
             instance.db = instance.client[config.NAME_CLUSTER]
             instance.users_collection = instance.db["user-data"]
             instance.clusters_collection = instance.db["clusters-data"]
+
             print("[INFO] Connected to MongoDB")
 
             if init is True:
@@ -120,7 +122,6 @@ class DriveMongo:
         except ConnectionFailure as e:
             print(f"[ERROR] Could not connect to MongoDB: {e}")
             return None
-        await instance.sync_data(layer)
         return instance
 
     # Get all discord_id
@@ -130,14 +131,12 @@ class DriveMongo:
         return discord_ids
 
     # Get file by name and id
-    def __get_file_by_id(self, file_id):
+    def __get_file_by_id(self, file_id, cluster_name):
         result = self.clusters_collection.find_one(
-            {"files": {"$elemMatch": {"id_message": file_id}}},
+            {"cluster_name": cluster_name, "files.id_message": file_id},
             {"files.$": 1}
         )
-        if result and "files" in result:
-            return result["files"][0]
-        return None
+        return result["files"][0] if result else None
 
     # PUBLIC METHOD
 

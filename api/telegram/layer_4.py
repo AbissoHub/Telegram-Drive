@@ -11,8 +11,9 @@ class Layer4:
         self.mongo = None
 
     async def initialize(self):
-        self.mongo = await DriveMongo().create(config.MONGO_URL, self.client, False)
+        self.mongo = await DriveMongo().create(config.MONGO_URL, False)
         self.client = await Layer3_2.create(self.mongo.get_users_discord_id())
+        await self.mongo.sync_data(self.client)
 
     # ------------------------------------------------------------------------------------------
 
