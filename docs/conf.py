@@ -15,6 +15,7 @@ extensions = [
     'sphinx.ext.viewcode',  
 ]
 
+master_doc = 'index'
 
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 
