@@ -4,6 +4,8 @@ from pymongo.errors import ConnectionFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from datetime import datetime
+
+from utils.config import config
 from utils.response_handler import success, error
 
 VALID_FILE_NAME_REGEX = r'^[\w\-.]+$'
@@ -15,6 +17,7 @@ class DriveMongo:
         self.client = None
         self.db = None
         self.clusters_collection = None
+        self.users_collection = None
         self.base_directory = "./"
         self.trash_directory = self.base_directory + "trash"
 
@@ -103,7 +106,7 @@ class DriveMongo:
         instance = cls()
         try:
             instance.client = MongoClient(url, server_api=ServerApi('1'))
-            instance.db = instance.client['Teledrive']
+            instance.db = instance.client[config.NAME_CLUSTER]
             instance.users_collection = instance.db["user-data"]
             instance.clusters_collection = instance.db["clusters-data"]
             print("[INFO] Connected to MongoDB")
@@ -119,6 +122,12 @@ class DriveMongo:
             return None
         await instance.sync_data(layer)
         return instance
+
+    # Get all discord_id
+    def get_users_discord_id(self):
+        cursor = self.users_collection.find({}, {"discord_id": 1, "_id": 0})
+        discord_ids = [user['discord_id'] for user in cursor if 'discord_id' in user]
+        return discord_ids
 
     # Get file by name and id
     def __get_file_by_id(self, file_id):

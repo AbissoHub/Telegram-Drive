@@ -1,4 +1,6 @@
 from telethon import TelegramClient
+from telethon.tl.functions.channels import CreateChannelRequest, CheckUsernameRequest, UpdateUsernameRequest
+from telethon.errors import UsernameInvalidError, UsernameOccupiedError
 from telethon.types import Message
 from utils.config import config
 from utils.response_handler import success, error
@@ -31,7 +33,6 @@ class TelegramAPI:
         self.API_ID = config.API_ID
         self.API_HASH = config.API_HASH
         self.PHONE = config.PHONE
-        self.USERS = config.USERS
         self.Name = "Telegram Drive"
         self.client = TelegramClient(self.Name, self.API_ID, self.API_HASH)
 
@@ -44,8 +45,6 @@ class TelegramAPI:
     def __get_PHONE(self):
         return self.PHONE
 
-    def get_users(self):
-        return self.USERS
 
     def is_connected(self):
         return self.client.is_connected()
@@ -85,7 +84,7 @@ class TelegramAPI:
             async for dialog in self.client.iter_dialogs():
                 if str(dialog.name) == str(chat_name):
                     return success("Dialog object found", dialog)
-            return error("[LAYER-2] Dialog object not found")
+            return success("[LAYER-2] Dialog object not found", None)
         except Exception as e:
             return error(str(e))
 
@@ -222,3 +221,32 @@ class TelegramAPI:
             return success("File deleted successfully", None)
         except Exception as e:
             return error("[LAYER-2] " + str(e))
+
+    @ensure_connected
+    async def create_group(
+            self,
+            title: str,
+            about: str = "",
+            megagroup: bool = False,
+    ) -> dict:
+        """
+        Creates a new group on Telegram.
+        """
+        try:
+            # Create the channel/group
+            result = await self.client(CreateChannelRequest(
+                title=title,
+                about=about,
+                megagroup=megagroup
+            ))
+            channel = result.chats[0]
+
+            return success({
+                "id": channel.id,
+                "title": channel.title,
+                "access_hash": channel.access_hash
+            }, None)
+
+        except Exception as e:
+            return error(f"Error creating the group: {e}")
+

@@ -1,5 +1,5 @@
 # Multiple user available and supporting MongoDB to avoid multiple get requests
-# User can't register, it is centralized, only admin can create credentials
+# User can't user management, it is centralized, only admin can create credentials
 
 # User have one gropchat associated as 'folder' structure to have low-level privacy
 # Also there are gropchat open for everyUser to share file
@@ -11,11 +11,12 @@ from utils.response_handler import success, error
 
 
 class Layer3_2:
-    def __init__(self):
+    def __init__(self, users):
         self.client = TelegramAPI()
         self.cluster_name_shared = "Drive_Layer_Shared"
         self.clusters_info = {}
         self.shared_drive_object_dialog = None
+        self.users = users
 
     async def __init_telegram_storage(self):
         try:
@@ -24,8 +25,13 @@ class Layer3_2:
             print(s)
             r = await self.client.get_dialog_object_by_name(self.cluster_name_shared)
 
-            if r["status"] == "error":
-                raise Exception(r['message'])
+            if r["status"] == "success" and r["data"] is None:
+                # Init drive -- create shared drive
+                s = await self.client.create_group(self.cluster_name_shared)
+                if s["status"] == "error":
+                    raise Exception(s["status"])
+
+            r = await self.client.get_dialog_object_by_name(self.cluster_name_shared)
 
             # Cluster doesn't exist
             if r["data"] == 0:
@@ -37,12 +43,21 @@ class Layer3_2:
                     self.shared_drive_object_dialog.draft.entity.id)
                 # print(self.shared_drive_object_dialog)
                 # Init name of cluster private
-                for n in self.client.get_users():
+                for n in self.users:
                     name = "Drive_Layer_Private_" + str(n)
                     # GET ID
                     r = await self.client.get_dialog_object_by_name(name)
+
                     if r["status"] == "error":
                         raise Exception(r['message'])
+
+                    if r["status"] == "success" and r["data"] == None:
+                        #Create channel for new users
+                        s = await self.client.create_group(name)
+                        if s["status"] == "error":
+                            raise Exception(s["status"])
+
+                    r = await self.client.get_dialog_object_by_name(name)
                     self.clusters_info[name] = str(r["data"].draft.entity.id)
             return True
 
@@ -50,8 +65,8 @@ class Layer3_2:
             raise Exception(str(e))
 
     @classmethod
-    async def create(cls):
-        instance = cls()
+    async def create(cls, users):
+        instance = cls(users)
         await instance.__init_telegram_storage()
         return instance
 

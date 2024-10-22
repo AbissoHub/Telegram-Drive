@@ -9,7 +9,7 @@ from utils.config import config
 class MongoDBLogin:
     def __init__(self, secret_key: str):
         self.client = MongoClient(config.MONGO_URL)
-        self.db = self.client["Teledrive"]
+        self.db = self.client[config.NAME_CLUSTER]
         self.users_collection = self.db["user-data"]
         self.secret_key = secret_key
 
