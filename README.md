@@ -162,7 +162,7 @@ The GUI communicates with the backend server through predefined endpoints, enabl
 
 ## 📖 Documentation
 The documentation for Telegram-Drive can be found here.
-
+available soon
 
 ## 📄 License
 
